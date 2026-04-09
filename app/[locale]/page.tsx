@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getMessage, loadMessages, resolveLocale } from "@/libs/i18n";
+import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
 
 export default async function LocaleHomePage({
   params,

@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { type Locale, siteConfig } from "@/configs/site";
+import { type Locale, siteConfig } from "@/config/site";
 
 type Messages = Record<string, unknown>;
 
