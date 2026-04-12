@@ -128,3 +128,20 @@
     @apply font-sans;
   }
 }
+
+@keyframes reveal {
+  from {
+    clip-path: circle(0% at var(--x) var(--y));
+  }
+  to {
+    clip-path: circle(150% at var(--x) var(--y));
+  }
+}
+
+::view-transition-new(root) {
+  animation: reveal 0.7s ease-in-out;
+}
+
+::view-transition-old(root) {
+  animation: none;
+}

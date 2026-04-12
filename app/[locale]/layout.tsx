@@ -3,9 +3,8 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
-
 import { routing } from "@/i18n/routing";
+import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
 
 type Props = {
   children: React.ReactNode;

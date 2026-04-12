@@ -1,28 +1,11 @@
-import { notFound } from "next/navigation";
+import { Header } from "@/components/header";
+import { HomeView } from "@/components/home-view";
 
-import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
-
-export default async function LocaleHomePage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale: localeParam } = await params;
-  const locale = resolveLocale(localeParam);
-
-  if (locale !== localeParam) {
-    notFound();
-  }
-
-  const messages = await loadMessages(locale);
-
+export default async function LocaleHomePage() {
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="space-y-4">
-        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          {getMessage(messages, "home.title")}
-        </h1>
-      </div>
+    <main className="bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex min-h-screen w-full flex-col font-sans">
+      <Header />
+      <HomeView />
     </main>
   );
 }

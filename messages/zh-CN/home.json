@@ -1,5 +1,12 @@
 {
   "home": {
-    "title": "Toolora"
+    "title": "Toolora",
+    "searchPlaceholder": "搜索工具...",
+    "searchBtn": "搜索",
+    "open": "打开",
+    "command": "命令",
+    "searchRack": "搜索架",
+    "commandHint": "⌘+K / Ctrl+K",
+    "emptyState": "暂无内容"
   }
 }

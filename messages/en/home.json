@@ -1,5 +1,12 @@
 {
   "home": {
-    "title": "Toolora"
+    "title": "Toolora",
+    "searchPlaceholder": "Search tools...",
+    "searchBtn": "Search",
+    "open": "Open",
+    "command": "Command",
+    "searchRack": "Search Rack",
+    "commandHint": "⌘+K / Ctrl+K",
+    "emptyState": "No results"
   }
 }
