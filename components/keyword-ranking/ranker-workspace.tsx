@@ -78,7 +78,7 @@ export function RankerWorkspace({
             value={keywords}
             onChange={(e) => onKeywordsChange(e.target.value)}
             rows={5}
-            placeholder="crm software\nlead generation tool\nkeyword rank tracker"
+            placeholder="keyword..."
             className="border-border bg-background/50 focus:border-primary focus:ring-primary/20 mt-2 w-full resize-none rounded-xl border px-4 py-3 transition-all outline-none focus:ring-4"
           />
         </div>
