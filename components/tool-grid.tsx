@@ -24,7 +24,7 @@ export function ToolGrid({ categories, activeCategory, tools }: ToolGridProps) {
   return (
     <main className="w-full min-w-0">
       <div className="mb-6 flex items-end justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">{activeLabel}</h2>
+        <h1 className="text-3xl font-bold tracking-tight">{activeLabel}</h1>
       </div>
 
       {tools.length === 0 ? (

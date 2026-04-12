@@ -42,5 +42,3 @@ next-env.d.ts
 
 # vscode
 .vscode
-
-.spec-workflow

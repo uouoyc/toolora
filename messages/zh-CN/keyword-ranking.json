@@ -1,0 +1,78 @@
+{
+  "keywordRanking": {
+    "hero": {
+      "title": "关键词排名查询",
+      "description": "发起本地化关键词排名查询，并查看最近一次结果快照。"
+    },
+    "workspace": {
+      "title": "查询工作区",
+      "domain": "域名或 URL",
+      "keywords": "关键词",
+      "country": "国家 / 地区",
+      "language": "语言",
+      "limit": "搜索深度",
+      "settings": "打开设置",
+      "runHint": "只有在已经保存 Key 池后才允许执行查询。",
+      "startQuery": "开始查询"
+    },
+    "status": {
+      "success": "查询完成。{found} 个关键词命中，共 {total} 个。",
+      "partial": "查询部分完成。{found} 个命中，{failed} 个失败。"
+    },
+    "metrics": {
+      "total": "关键词总数",
+      "found": "已找到",
+      "missed": "未找到",
+      "failed": "失败"
+    },
+    "results": {
+      "title": "最近一次结果快照",
+      "export": "导出结果",
+      "exportWithKey": "导出结果 + Key",
+      "keyword": "关键词",
+      "rank": "排名",
+      "url": "URL",
+      "key": "Key",
+      "status": "状态",
+      "prev": "上一页",
+      "next": "下一页",
+      "rowsPerPage": "每页展示"
+    },
+    "settings": {
+      "title": "查询设置",
+      "close": "关闭",
+      "keyPool": {
+        "label": "Key pool",
+        "title": "Key 池管理",
+        "description": "管理您的 SerpApi 密钥池。添加多个 Key 可分摊额度消耗并降低限频风险。",
+        "placeholder": "输入 SerpApi Key，一行一个",
+        "save": "保存",
+        "check": "检查额度"
+      },
+      "strategy": {
+        "label": "Strategy",
+        "title": "查询策略",
+        "description": "选择如何分发您的查询请求。",
+        "roundRobin": "轮询分发",
+        "roundRobinDesc": "在池中的所有密钥之间平均分配请求。",
+        "sequential": "顺序优先",
+        "sequentialDesc": "按顺序使用密钥，直到当前密钥耗尽。"
+      },
+      "health": {
+        "label": "Key health",
+        "title": "Key 健康状态",
+        "description": "基于 SerpAPI 额度数据的各 Key 状态。",
+        "key": "Key",
+        "remaining": "剩余次数",
+        "total": "当月限额",
+        "plan": "套餐名称",
+        "rateUsed": "小时用量",
+        "rateLimit": "小时限额",
+        "status": "状态",
+        "active": "正常",
+        "rateLimited": "限频",
+        "exhausted": "耗尽"
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { Header } from "@/components/header";
 import { routing } from "@/i18n/routing";
 import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
 
@@ -24,8 +25,13 @@ export async function generateMetadata({
   const locale = resolveLocale(localeParam);
   const messages = await loadMessages(locale);
 
+  const siteName = getMessage(messages, "app.title");
+
   return {
-    title: getMessage(messages, "app.title"),
+    title: {
+      template: `%s - ${siteName}`,
+      default: siteName,
+    },
     description: getMessage(messages, "app.description"),
   };
 }
@@ -43,7 +49,10 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      <main className="bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex min-h-screen w-full flex-col font-sans">
+        <Header />
+        {children}
+      </main>
     </NextIntlClientProvider>
   );
 }

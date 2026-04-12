@@ -4,7 +4,7 @@ import { type Locale, siteConfig } from "@/config/site";
 
 type Messages = Record<string, unknown>;
 
-const bundles = ["common", "home"] as const;
+const bundles = ["common", "home", "keyword-ranking"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

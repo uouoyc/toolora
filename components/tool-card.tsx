@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import { useLocale, useTranslations } from "next-intl";
 
 import { ArrowUpRight } from "lucide-react";
@@ -13,7 +15,7 @@ interface ToolCardProps {
   tool: Tool;
 }
 
-export function ToolCard({ tool }: ToolCardProps) {
+export const ToolCard = memo(function ToolCard({ tool }: ToolCardProps) {
   const locale = useLocale();
   const lang: Language = locale === "zh-CN" ? "zh" : "en";
   const t = useTranslations("home");
@@ -51,4 +53,4 @@ export function ToolCard({ tool }: ToolCardProps) {
       </Button>
     </article>
   );
-}
+});

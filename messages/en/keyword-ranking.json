@@ -1,0 +1,78 @@
+{
+  "keywordRanking": {
+    "hero": {
+      "title": "Keyword Ranker",
+      "description": "Initiate localized keyword rank queries and view snapshots of the latest results."
+    },
+    "workspace": {
+      "title": "Query Workspace",
+      "domain": "Domain or URL",
+      "keywords": "Keywords",
+      "country": "Country",
+      "language": "Language",
+      "limit": "Limit",
+      "settings": "Settings",
+      "runHint": "Queries are only allowed after the Key pool has been saved.",
+      "startQuery": "Start Query"
+    },
+    "status": {
+      "success": "Query completed. {found} hits out of {total} keywords.",
+      "partial": "Query partially completed. {found} hits, {failed} failed."
+    },
+    "metrics": {
+      "total": "Total",
+      "found": "Found",
+      "missed": "Missed",
+      "failed": "Failed"
+    },
+    "results": {
+      "title": "Latest Snapshot",
+      "export": "Export Results",
+      "exportWithKey": "Export + Key",
+      "keyword": "Keyword",
+      "rank": "Rank",
+      "url": "URL",
+      "key": "Key",
+      "status": "Status",
+      "prev": "Previous",
+      "next": "Next",
+      "rowsPerPage": "Rows per page"
+    },
+    "settings": {
+      "title": "Settings",
+      "close": "Close",
+      "keyPool": {
+        "label": "Key pool",
+        "title": "Key Pool Management",
+        "description": "Manage your SerpApi keys. Multiple keys distribute quota consumption and reduce rate-limit risk.",
+        "placeholder": "Enter SerpApi keys, one per line",
+        "save": "Save",
+        "check": "Check Quota"
+      },
+      "strategy": {
+        "label": "Strategy",
+        "title": "Query Strategy",
+        "description": "Choose how to distribute your query requests.",
+        "roundRobin": "Round Robin",
+        "roundRobinDesc": "Distribute requests evenly across all keys in the pool.",
+        "sequential": "Sequential",
+        "sequentialDesc": "Use keys sequentially until the current key is exhausted."
+      },
+      "health": {
+        "label": "Key health",
+        "title": "Key Health Status",
+        "description": "SerpAPI quota data for each key.",
+        "key": "Key",
+        "remaining": "Remaining",
+        "total": "Monthly Limit",
+        "plan": "Plan",
+        "rateUsed": "Hourly Used",
+        "rateLimit": "Hourly Limit",
+        "status": "Status",
+        "active": "Active",
+        "rateLimited": "Rate Limited",
+        "exhausted": "Exhausted"
+      }
+    }
+  }
+}

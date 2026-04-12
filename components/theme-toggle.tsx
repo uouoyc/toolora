@@ -1,9 +1,21 @@
+"use client";
+import { useEffect, useState } from "react";
+
 import { useTheme } from "next-themes";
 
 import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="h-5 w-5 p-2" />;
+  }
 
   const handleToggle = (event: React.MouseEvent) => {
     const isDark = theme === "dark";
@@ -20,14 +32,9 @@ export function ThemeToggle() {
     document.documentElement.style.setProperty("--x", x + "px");
     document.documentElement.style.setProperty("--y", y + "px");
 
-    document
-      .startViewTransition(() => {
-        setTheme(nextTheme);
-      })
-      .finished.then(() => {
-        document.documentElement.style.removeProperty("--x");
-        document.documentElement.style.removeProperty("--y");
-      });
+    document.startViewTransition(() => {
+      setTheme(nextTheme);
+    });
   };
 
   return (

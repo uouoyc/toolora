@@ -20,7 +20,7 @@ export function Header() {
         onClick={() => router.replace("/", { locale })}
         className="flex cursor-pointer items-center gap-3"
       >
-        <h1 className="text-2xl font-bold tracking-tighter">Toolora</h1>
+        <span className="text-2xl font-bold tracking-tighter">Toolora</span>
       </button>
 
       <div className="flex items-center gap-2">
