@@ -248,3 +248,8 @@ export const LANGUAGES = [
   { code: "zh-CN", name: "Chinese Simplified" },
   { code: "zh-TW", name: "Chinese Traditional" },
 ];
+
+export function getCountryName(code: string): string {
+  const country = COUNTRIES.find((c) => c.code === code);
+  return country?.name ?? code;
+}

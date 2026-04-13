@@ -5,8 +5,9 @@ import {
   type ResultRow,
   maskKey,
 } from "@/lib/keyword-ranking";
+import { getCountryName } from "@/lib/search-config";
 
-const SERPAPI_BASE = "https://serpapi.com/search.json";
+const SERPAPI_BASE = "https://serpapi.com/search";
 const keywordCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHE_SIZE = 2000;
@@ -97,12 +98,15 @@ async function searchOnePage(
   language: string,
   start: number,
 ): Promise<SerpApiResponse> {
+  const location = getCountryName(country);
   const params = new URLSearchParams({
     engine: "google_light",
     q: keyword,
     api_key: apiKey,
     gl: country,
     hl: language,
+    location,
+    google_domain: "google.com",
     start: String(start),
   });
 
@@ -140,7 +144,6 @@ async function searchKeyword(
 
   const normalizedTarget = normalizeDomain(targetDomain);
   const pagesNeeded = Math.ceil(limit / 10);
-  let globalRank = 0;
   let currentStart = 0;
 
   for (let page = 0; page < pagesNeeded; page++) {
@@ -155,11 +158,10 @@ async function searchKeyword(
 
     if (results.length === 0) break;
 
+    // Find match in current page
     for (const result of results) {
-      globalRank++;
-      if (globalRank > limit) break;
-
       if (isUrlMatch(result.link, normalizedTarget)) {
+        const globalRank = currentStart + result.position;
         const entry = {
           rank: String(globalRank),
           url: result.link,
@@ -171,6 +173,14 @@ async function searchKeyword(
       }
     }
 
+    // No match on this page — get the last result's global position
+    const lastResult = results[results.length - 1];
+    const pageMaxRank = currentStart + lastResult.position;
+
+    // If page max rank already exceeds limit, stop searching
+    if (pageMaxRank >= limit) break;
+
+    // Move to next page
     const nextStart = page < pagesNeeded - 1 ? currentStart + 10 : null;
     if (nextStart === null) break;
     currentStart = nextStart;
