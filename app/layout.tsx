@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
+
+import { MicrosoftAnalytics } from "@/components/microsoft-analytics";
 import { ThemeProvider } from "@/components/theme-provider";
 import "@/styles/globals.css";
 
@@ -40,6 +44,9 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-CM5R2B6NM2" />
+        <MicrosoftAnalytics gaId="wb39fj1p36" />
+        <Analytics />
       </body>
     </html>
   );
