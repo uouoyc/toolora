@@ -5,7 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 
 import { MicrosoftAnalytics } from "@/components/microsoft-analytics";
-import { ThemeProvider } from "@/components/theme-provider";
+
 import "@/styles/globals.css";
 
 const geistSans = Geist({
@@ -31,19 +31,11 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="mx-auto flex min-h-full max-w-7xl px-4">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        {children}
         <GoogleAnalytics gaId="G-CM5R2B6NM2" />
         <MicrosoftAnalytics gaId="wb39fj1p36" />
         <Analytics />

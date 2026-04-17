@@ -20,6 +20,7 @@ interface RankerWorkspaceProps {
   onQueryStart: () => void;
   hasKeys: boolean;
   isQuerying: boolean;
+  progress: { processed: number; total: number } | null;
 }
 
 export function RankerWorkspace({
@@ -37,6 +38,7 @@ export function RankerWorkspace({
   onQueryStart,
   hasKeys,
   isQuerying,
+  progress,
 }: RankerWorkspaceProps) {
   const t = useTranslations("keywordRanking");
 
@@ -150,7 +152,11 @@ export function RankerWorkspace({
             disabled={!hasKeys || isQuerying}
             className="min-h-14 cursor-pointer gap-2 rounded-xl px-8 md:h-auto"
           >
-            {isQuerying ? "..." : t("workspace.startQuery")}
+            {isQuerying
+              ? progress
+                ? `${progress.processed} / ${progress.total}`
+                : "..."
+              : t("workspace.startQuery")}
             {!isQuerying && <ArrowUpRight size={18} />}
           </Button>
         </div>

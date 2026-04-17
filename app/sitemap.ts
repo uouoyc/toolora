@@ -1,8 +1,10 @@
 import { MetadataRoute } from "next";
 
+import { siteConfig } from "@/config/site";
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://www.toolora.tools";
-  const locales = ["zh-CN", "en"];
+  const baseUrl = siteConfig.siteUrl;
+  const locales = siteConfig.locales;
 
   const routes = [
     { path: "", priority: 1, changeFrequency: "weekly" as const },

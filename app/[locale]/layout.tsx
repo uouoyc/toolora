@@ -4,6 +4,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { Header } from "@/components/header";
+import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import { getMessage, loadMessages, resolveLocale } from "@/lib/i18n";
 
@@ -46,13 +47,24 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
 
   const messages = await getMessages({ locale });
+  const htmlLang = locale === "zh-CN" ? "zh-CN" : locale;
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <main className="bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex min-h-screen w-full flex-col font-sans">
-        <Header />
-        {children}
-      </main>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <main
+          lang={htmlLang}
+          className="bg-background text-foreground selection:bg-primary selection:text-primary-foreground flex min-h-screen w-full flex-col font-sans"
+        >
+          <Header />
+          {children}
+        </main>
+      </ThemeProvider>
     </NextIntlClientProvider>
   );
 }

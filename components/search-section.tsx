@@ -65,7 +65,10 @@ export function SearchSection({ value, onChange }: SearchSectionProps) {
           </div>
 
           {/* Search button */}
-          <Button className="h-full min-h-13 cursor-pointer gap-2 rounded-2xl">
+          <Button
+            onClick={() => inputRef.current?.focus()}
+            className="h-full min-h-13 cursor-pointer gap-2 rounded-2xl"
+          >
             {t("searchBtn")}
             <ArrowUpRight size={18} />
           </Button>

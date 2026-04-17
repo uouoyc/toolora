@@ -45,7 +45,7 @@ export const ToolCard = memo(function ToolCard({ tool }: ToolCardProps) {
       </div>
 
       <Button
-        onClick={() => router.replace(`/${tool.id}`)}
+        onClick={() => router.push(`/${tool.id}`)}
         className="w-full cursor-pointer"
       >
         {t("open")}

@@ -26,8 +26,11 @@ export function KeywordRankerView() {
     handleStrategyChange,
     handleKeysChange,
     results,
+    paginatedResults,
     isQuerying,
     queryStatus,
+    queryError,
+    queryProgress,
     metrics,
     handleQueryStart,
     currentPage,
@@ -57,6 +60,7 @@ export function KeywordRankerView() {
           onQueryStart={handleQueryStart}
           hasKeys={keys.length > 0}
           isQuerying={isQuerying}
+          progress={queryProgress}
         />
 
         <RankerStatus
@@ -64,6 +68,7 @@ export function KeywordRankerView() {
           found={metrics.found}
           total={metrics.total}
           failed={metrics.failed}
+          error={queryError}
         />
 
         {(metrics.total > 0 || results.length > 0) && (
@@ -77,10 +82,11 @@ export function KeywordRankerView() {
 
         {results.length > 0 && (
           <RankerResults
-            results={results}
+            results={paginatedResults}
+            allResults={results}
             currentPage={currentPage}
             pageSize={pageSize}
-            total={metrics.total}
+            total={results.length}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             onExportWithKey={handleExportWithKey}
@@ -91,7 +97,6 @@ export function KeywordRankerView() {
       <RankerSettings
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        onOpen={handleExportWithKey}
         strategy={strategy}
         onStrategyChange={handleStrategyChange}
         keys={keys}

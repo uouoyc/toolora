@@ -5,6 +5,7 @@ interface RankerStatusProps {
   found: number;
   total: number;
   failed: number;
+  error: string | null;
 }
 
 export function RankerStatus({
@@ -12,8 +13,18 @@ export function RankerStatus({
   found,
   total,
   failed,
+  error,
 }: RankerStatusProps) {
   const t = useTranslations("keywordRanking");
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm font-medium text-red-600 dark:text-red-400">
+        <span className="mr-2 font-mono font-bold">STATUS / ERROR</span>
+        {error}
+      </div>
+    );
+  }
 
   if (status === "idle") return null;
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { type KeyHealthRow } from "@/lib/keyword-ranking";
+import { type KeyHealthRow, type ResultRow } from "@/lib/keyword-ranking";
 
 // Storage keys
 const STORAGE_KEY = "toolora-kr-keys";
@@ -13,7 +13,7 @@ const DRAWER_KEY = "toolora-kr-drawer";
 // Default values (US / English — no domain/keywords defaults per spec)
 const DEFAULT_COUNTRY = "US";
 const DEFAULT_LANGUAGE = "en";
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 20;
 
 /* Storage helpers (safe to call on server — return defaults) */
 function loadStoredKeys(): string[] {
@@ -50,14 +50,8 @@ function loadStoredForm(): {
   }
 }
 
-// Types
-export interface ResultRow {
-  keyword: string;
-  rank: string;
-  url: string;
-  keyAlias: string;
-  status: "found" | "miss" | "fail";
-}
+// Re-export for consumers
+export type { ResultRow } from "@/lib/keyword-ranking";
 
 export interface QueryMetrics {
   total: number;
@@ -66,11 +60,9 @@ export interface QueryMetrics {
   failed: number;
 }
 
-export interface QueryResponse {
-  taskId: string;
-  results: ResultRow[];
-  metrics: QueryMetrics;
-  status: "success" | "partial";
+export interface QueryProgress {
+  processed: number;
+  total: number;
 }
 
 export interface UseKeywordRankerReturn {
@@ -98,8 +90,11 @@ export interface UseKeywordRankerReturn {
 
   // Query
   results: ResultRow[];
+  paginatedResults: ResultRow[];
   isQuerying: boolean;
   queryStatus: "idle" | "success" | "partial";
+  queryError: string | null;
+  queryProgress: QueryProgress | null;
   metrics: QueryMetrics;
   handleQueryStart: () => Promise<void>;
 
@@ -140,6 +135,10 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
   const [queryStatus, setQueryStatus] = useState<
     "idle" | "success" | "partial"
   >("idle");
+  const [queryError, setQueryError] = useState<string | null>(null);
+  const [queryProgress, setQueryProgress] = useState<QueryProgress | null>(
+    null,
+  );
   const [metrics, setMetrics] = useState<QueryMetrics>({
     total: 0,
     found: 0,
@@ -150,6 +149,21 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // AbortController ref for cancelling in-flight SSE queries
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const paginatedResults = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return results.slice(start, start + pageSize);
+  }, [results, currentPage, pageSize]);
 
   // After mount: restore persisted state (fixes H1 hydration mismatch)
   useEffect(() => {
@@ -187,14 +201,23 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
 
   const handleKeysChange = useCallback((newKeys: string[]) => {
     setKeys(newKeys);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newKeys));
   }, []);
 
   const handleQueryStart = useCallback(async () => {
     if (keys.length === 0) return;
     setIsQuerying(true);
     setQueryStatus("idle");
+    setQueryError(null);
+    setQueryProgress(null);
+    setResults([]);
+    setMetrics({ total: 0, found: 0, missed: 0, failed: 0 });
+    setCurrentPage(1);
 
+    // Abort any in-flight query
+    abortRef.current?.abort();
     const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const keywordList = keywords
@@ -202,7 +225,7 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
         .map((k) => k.trim())
         .filter(Boolean);
 
-      const queryRes = await fetch("/api/keyword-ranking/query", {
+      const res = await fetch("/api/keyword-ranking/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -217,17 +240,57 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
         signal: controller.signal,
       });
 
-      if (!queryRes.ok) throw new Error("Query failed");
-      const queryData: QueryResponse = await queryRes.json();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
 
-      setResults(queryData.results);
-      setMetrics(queryData.metrics);
-      setQueryStatus(queryData.status);
-      setCurrentPage(1);
+      if (!res.body) throw new Error("No response stream");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      const accumulated: ResultRow[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        let eventType = "";
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith("data: ") && eventType) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (eventType === "batch") {
+                accumulated.push(...(data as ResultRow[]));
+                setResults([...accumulated]);
+              } else if (eventType === "progress") {
+                setQueryProgress(data as QueryProgress);
+              } else if (eventType === "done") {
+                setMetrics(data.metrics);
+                setQueryStatus(data.status);
+              }
+            } catch {
+              // Skip malformed SSE data lines
+            }
+
+            eventType = "";
+          }
+        }
+      }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
+      setQueryError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsQuerying(false);
+      setQueryProgress(null);
     }
   }, [keys, strategy, domain, keywords, country, language, limit]);
 
@@ -280,8 +343,11 @@ export function useKeywordRanker(): UseKeywordRankerReturn {
     handleKeysChange,
     // Query
     results,
+    paginatedResults,
     isQuerying,
     queryStatus,
+    queryError,
+    queryProgress,
     metrics,
     handleQueryStart,
     // Pagination

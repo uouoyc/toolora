@@ -3,16 +3,11 @@ import { useTranslations } from "next-intl";
 import { ArrowUpRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { type KeyHealthRow } from "@/lib/keyword-ranking";
+import { type KeyHealthRow, type ResultRow } from "@/lib/keyword-ranking";
 
 interface RankerResultsProps {
-  results: Array<{
-    keyword: string;
-    rank: string;
-    url: string;
-    keyAlias: string;
-    status: "found" | "miss" | "fail";
-  }>;
+  results: ResultRow[];
+  allResults: ResultRow[];
   currentPage: number;
   pageSize: number;
   total: number;
@@ -101,8 +96,24 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function getPageNumbers(
+  current: number,
+  total: number,
+): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [1];
+  const left = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  if (left > 2) pages.push("...");
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 1) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
 export function RankerResults({
   results,
+  allResults,
   currentPage,
   pageSize,
   total,
@@ -113,16 +124,16 @@ export function RankerResults({
   const t = useTranslations("keywordRanking");
   const totalPages = Math.ceil(total / pageSize);
 
-  if (results.length === 0) return null;
+  if (allResults.length === 0) return null;
 
   const handleExport = () => {
-    const csv = buildCsv(results, false, (key) => t(key));
+    const csv = buildCsv(allResults, false, (key) => t(key));
     const ts = new Date().toISOString().slice(0, 10);
     downloadBlob(encodeCsv(csv), `keyword-ranking-${ts}.csv`);
   };
 
   const handleExportWithKey = async () => {
-    const csv = buildCsv(results, true, (key) => t(key));
+    const csv = buildCsv(allResults, true, (key) => t(key));
     const healthRows = await onExportWithKey();
     const healthSection = buildKeyHealthSection(healthRows, (key) => t(key));
     const fullCsv = csv + healthSection;
@@ -176,8 +187,11 @@ export function RankerResults({
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
-            {results.map((row, i) => (
-              <tr key={i} className="hover:bg-accent/30 transition-colors">
+            {results.map((row) => (
+              <tr
+                key={`${row.keyword}-${row.keyAlias}`}
+                className="hover:bg-accent/30 transition-colors"
+              >
                 <td className="px-4 py-4 font-medium">{row.keyword}</td>
                 <td className="px-4 py-4 font-mono">{row.rank}</td>
                 <td className="text-muted-foreground max-w-50 truncate px-4 py-4 text-sm">
@@ -238,19 +252,28 @@ export function RankerResults({
             {t("results.prev")}
           </Button>
           <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => onPageChange(page)}
-                className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
-                  currentPage === page
-                    ? "bg-primary text-primary-foreground"
-                    : "border-input bg-background hover:bg-accent border"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {getPageNumbers(currentPage, totalPages).map((page, i) =>
+              page === "..." ? (
+                <span
+                  key={`ellipsis-${i}`}
+                  className="text-muted-foreground flex h-9 w-9 items-center justify-center text-xs"
+                >
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page as number)}
+                  className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
+                    currentPage === page
+                      ? "bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-accent border"
+                  }`}
+                >
+                  {page}
+                </button>
+              ),
+            )}
           </div>
           <Button
             variant="outline"

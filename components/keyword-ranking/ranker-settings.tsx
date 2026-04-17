@@ -7,38 +7,20 @@ import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-interface KeyHealthRow {
-  alias: string;
-  remaining: number;
-  total: number;
-  plan: string;
-  rateUsed: number;
-  rateLimit: number;
-  status: "active" | "rate_limited" | "exhausted";
-}
+import { type KeyHealthRow } from "@/lib/keyword-ranking";
 
 interface RankerSettingsProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpen?: () => void;
   strategy: "roundRobin" | "sequential";
   onStrategyChange: (s: "roundRobin" | "sequential") => void;
   keys: string[];
   onKeysChange: (keys: string[]) => void;
 }
 
-// Persist keys to localStorage
-const STORAGE_KEY = "toolora-kr-keys";
-
-function saveKeys(keys: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
-}
-
 export function RankerSettings({
   isOpen,
   onClose,
-  onOpen,
   strategy,
   onStrategyChange,
   keys,
@@ -56,15 +38,14 @@ export function RankerSettings({
     setKeysText(keys.join("\n"));
   }, [keys]);
 
-  // Animate in when opened, and call onOpen so parent can refresh key health
+  // Animate in when opened
   useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => setVisible(true));
-      onOpen?.();
     } else {
       setVisible(false);
     }
-  }, [isOpen, onOpen]);
+  }, [isOpen]);
 
   // Close on Escape
   useEffect(() => {
@@ -88,7 +69,6 @@ export function RankerSettings({
       .map((k) => k.trim())
       .filter(Boolean);
     onKeysChange(parsed);
-    saveKeys(parsed);
   };
 
   const handleCheckQuota = async () => {
