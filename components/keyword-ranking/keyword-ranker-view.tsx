@@ -32,7 +32,14 @@ export function KeywordRankerView() {
     queryError,
     queryProgress,
     metrics,
+    estimatedCalls,
+    queryBlockReason,
+    canResume,
+    failedCount,
     handleQueryStart,
+    handleQueryPause,
+    handleQueryResume,
+    handleRetryFailed,
     currentPage,
     pageSize,
     handlePageChange,
@@ -58,9 +65,17 @@ export function KeywordRankerView() {
           onLimitChange={setLimit}
           onSettingsOpen={() => setIsDrawerOpen(true)}
           onQueryStart={handleQueryStart}
+          onQueryPause={handleQueryPause}
+          onQueryResume={handleQueryResume}
+          onRetryFailed={handleRetryFailed}
           hasKeys={keys.length > 0}
           isQuerying={isQuerying}
+          status={queryStatus}
           progress={queryProgress}
+          estimatedCalls={estimatedCalls}
+          queryBlockReason={queryBlockReason}
+          canResume={canResume}
+          failedCount={failedCount}
         />
 
         <RankerStatus

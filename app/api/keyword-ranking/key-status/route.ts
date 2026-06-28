@@ -14,12 +14,20 @@ interface AccountApiResponse {
   account_rate_limit_per_hour: number;
 }
 
+const MAX_KEYS = 20;
+
 export async function POST(request: Request) {
   try {
     const { keys }: { keys: string[] } = await request.json();
 
-    if (!keys || keys.length === 0) {
+    if (!Array.isArray(keys) || keys.length === 0) {
       return NextResponse.json({ error: "keys is required" }, { status: 400 });
+    }
+    if (keys.length > MAX_KEYS) {
+      return NextResponse.json(
+        { error: `keys cannot exceed ${MAX_KEYS}` },
+        { status: 400 },
+      );
     }
 
     // Fetch SerpAPI Account API for each key in parallel
@@ -30,6 +38,7 @@ export async function POST(request: Request) {
         try {
           const res = await fetch(
             `https://serpapi.com/account?api_key=${encodeURIComponent(key)}`,
+            { signal: AbortSignal.timeout(15_000) },
           );
 
           if (!res.ok) {

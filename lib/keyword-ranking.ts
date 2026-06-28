@@ -9,6 +9,18 @@ export interface QueryRequest {
   limit: number;
 }
 
+export interface BatchQueryRequest {
+  keys: string[];
+  strategy: "roundRobin" | "sequential";
+  domain: string;
+  keywords: string[];
+  country: string;
+  language: string;
+  limit: number;
+  totalKeywords?: number;
+  keyOffset?: number;
+}
+
 // Result row shown in table
 export interface ResultRow {
   keyword: string;
@@ -16,6 +28,8 @@ export interface ResultRow {
   url: string;
   keyAlias: string;
   status: "found" | "miss" | "fail";
+  errorType?: string;
+  errorMessage?: string;
 }
 
 // Key health from SerpAPI Account API

@@ -96,10 +96,7 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function getPageNumbers(
-  current: number,
-  total: number,
-): (number | "...")[] {
+function getPageNumbers(current: number, total: number): (number | "...")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages: (number | "...")[] = [1];
   const left = Math.max(2, current - 1);
@@ -187,9 +184,9 @@ export function RankerResults({
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
-            {results.map((row) => (
+            {results.map((row, index) => (
               <tr
-                key={`${row.keyword}-${row.keyAlias}`}
+                key={`${row.keyword}-${row.keyAlias}-${index}`}
                 className="hover:bg-accent/30 transition-colors"
               >
                 <td className="px-4 py-4 font-medium">{row.keyword}</td>
@@ -202,6 +199,7 @@ export function RankerResults({
                 </td>
                 <td className="px-4 py-4">
                   <span
+                    title={row.errorMessage}
                     className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${
                       row.status === "found"
                         ? "bg-green-500/10 text-green-600 dark:text-green-400"

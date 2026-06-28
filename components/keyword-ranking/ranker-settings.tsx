@@ -9,6 +9,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type KeyHealthRow } from "@/lib/keyword-ranking";
 
+const MAX_KEYS = 20;
+
 interface RankerSettingsProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,6 +32,7 @@ export function RankerSettings({
   const [keysText, setKeysText] = useState(keys.join("\n"));
   const [telemetry, setTelemetry] = useState<KeyHealthRow[]>([]);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
+  const [keyError, setKeyError] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -68,11 +71,16 @@ export function RankerSettings({
       .split("\n")
       .map((k) => k.trim())
       .filter(Boolean);
+    if (parsed.length > MAX_KEYS) {
+      setKeyError(`keys cannot exceed ${MAX_KEYS}`);
+      return;
+    }
+    setKeyError(null);
     onKeysChange(parsed);
   };
 
   const handleCheckQuota = async () => {
-    if (keys.length === 0) return;
+    if (keys.length === 0 || keys.length > MAX_KEYS) return;
     setIsLoadingHealth(true);
     try {
       const res = await fetch("/api/keyword-ranking/key-status", {
@@ -139,11 +147,17 @@ export function RankerSettings({
             <div className="space-y-3">
               <textarea
                 value={keysText}
-                onChange={(e) => setKeysText(e.target.value)}
+                onChange={(e) => {
+                  setKeysText(e.target.value);
+                  setKeyError(null);
+                }}
                 rows={6}
                 placeholder={t("settings.keyPool.placeholder")}
                 className="border-border bg-background/50 focus:border-primary focus:ring-primary/10 w-full rounded-2xl border px-5 py-4 font-mono text-sm leading-relaxed transition-all outline-none focus:ring-4"
               />
+              {keyError && (
+                <p className="text-xs font-medium text-red-500">{keyError}</p>
+              )}
             </div>
 
             <div className="flex gap-3">
@@ -156,7 +170,9 @@ export function RankerSettings({
               </Button>
               <Button
                 onClick={handleCheckQuota}
-                disabled={keys.length === 0 || isLoadingHealth}
+                disabled={
+                  keys.length === 0 || keys.length > MAX_KEYS || isLoadingHealth
+                }
                 className="shadow-primary/20 flex-1 cursor-pointer rounded-xl py-4 text-xs font-bold tracking-widest uppercase shadow-lg"
               >
                 {isLoadingHealth ? "..." : t("settings.keyPool.check")}

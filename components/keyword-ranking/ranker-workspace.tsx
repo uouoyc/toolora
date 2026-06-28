@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-import { ArrowUpRight, Settings } from "lucide-react";
+import { ArrowUpRight, Pause, Play, RotateCcw, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { COUNTRIES, LANGUAGES } from "@/lib/search-config";
@@ -18,9 +18,17 @@ interface RankerWorkspaceProps {
   onLimitChange: (v: number) => void;
   onSettingsOpen: () => void;
   onQueryStart: () => void;
+  onQueryPause: () => void;
+  onQueryResume: () => void;
+  onRetryFailed: () => void;
   hasKeys: boolean;
   isQuerying: boolean;
+  status: "idle" | "running" | "paused" | "success" | "partial" | "failed";
   progress: { processed: number; total: number } | null;
+  estimatedCalls: number;
+  queryBlockReason: string | null;
+  canResume: boolean;
+  failedCount: number;
 }
 
 export function RankerWorkspace({
@@ -36,11 +44,20 @@ export function RankerWorkspace({
   onLimitChange,
   onSettingsOpen,
   onQueryStart,
+  onQueryPause,
+  onQueryResume,
+  onRetryFailed,
   hasKeys,
   isQuerying,
+  status,
   progress,
+  estimatedCalls,
+  queryBlockReason,
+  canResume,
+  failedCount,
 }: RankerWorkspaceProps) {
   const t = useTranslations("keywordRanking");
+  const isBlocked = Boolean(queryBlockReason);
 
   return (
     <section className="border-border bg-card relative overflow-hidden rounded-[2rem] border p-8">
@@ -146,19 +163,58 @@ export function RankerWorkspace({
             <p className="text-muted-foreground text-xs">
               {t("workspace.runHint")}
             </p>
+            <p
+              className={`mt-2 font-mono text-xs ${
+                isBlocked ? "text-red-500" : "text-muted-foreground"
+              }`}
+            >
+              {t("workspace.estimatedCalls", { count: estimatedCalls })}
+            </p>
+            {queryBlockReason && (
+              <p className="mt-1 text-xs font-medium text-red-500">
+                {queryBlockReason}
+              </p>
+            )}
           </div>
-          <Button
-            onClick={onQueryStart}
-            disabled={!hasKeys || isQuerying}
-            className="min-h-14 cursor-pointer gap-2 rounded-xl px-8 md:h-auto"
-          >
-            {isQuerying
-              ? progress
-                ? `${progress.processed} / ${progress.total}`
-                : "..."
-              : t("workspace.startQuery")}
-            {!isQuerying && <ArrowUpRight size={18} />}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row md:min-w-64">
+            {isQuerying ? (
+              <Button
+                onClick={onQueryPause}
+                className="min-h-14 flex-1 cursor-pointer gap-2 rounded-xl px-8 md:h-auto"
+              >
+                {progress ? `${progress.processed} / ${progress.total}` : "..."}
+                <Pause size={18} />
+              </Button>
+            ) : status === "paused" && canResume ? (
+              <Button
+                onClick={onQueryResume}
+                disabled={!hasKeys}
+                className="min-h-14 flex-1 cursor-pointer gap-2 rounded-xl px-8 md:h-auto"
+              >
+                {t("workspace.resumeQuery")}
+                <Play size={18} />
+              </Button>
+            ) : (
+              <Button
+                onClick={onQueryStart}
+                disabled={!hasKeys || isBlocked}
+                className="min-h-14 flex-1 cursor-pointer gap-2 rounded-xl px-8 md:h-auto"
+              >
+                {t("workspace.startQuery")}
+                <ArrowUpRight size={18} />
+              </Button>
+            )}
+            {failedCount > 0 && !isQuerying && (
+              <Button
+                variant="outline"
+                onClick={onRetryFailed}
+                className="min-h-14 cursor-pointer gap-2 rounded-xl px-4 md:h-auto"
+              >
+                {t("workspace.retryFailed")}
+                <RotateCcw size={16} />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </section>

@@ -13,11 +13,16 @@
       "limit": "搜索深度",
       "settings": "打开设置",
       "runHint": "只有在已经保存 Key 池后才允许执行查询。",
-      "startQuery": "开始查询"
+      "startQuery": "开始查询",
+      "resumeQuery": "继续查询",
+      "retryFailed": "重试失败项",
+      "estimatedCalls": "预计 SerpAPI 尝试次数：{count}"
     },
     "status": {
       "success": "查询完成。{found} 个关键词命中，共 {total} 个。",
-      "partial": "查询部分完成。{found} 个命中，{failed} 个失败。"
+      "partial": "查询部分完成。{found} 个命中，{failed} 个失败。",
+      "paused": "查询已暂停。已处理结果中 {found} 个命中，共 {total} 条。",
+      "failed": "查询失败，尚未完成任何结果。"
     },
     "metrics": {
       "total": "关键词总数",
@@ -56,7 +61,7 @@
         "roundRobin": "轮询分发",
         "roundRobinDesc": "在池中的所有密钥之间平均分配请求。",
         "sequential": "顺序优先",
-        "sequentialDesc": "按顺序使用密钥，直到当前密钥耗尽。"
+        "sequentialDesc": "按顺序查询，直到当前 Key 失败后切到下一个 Key。"
       },
       "health": {
         "label": "Key health",

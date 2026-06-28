@@ -13,11 +13,16 @@
       "limit": "Limit",
       "settings": "Settings",
       "runHint": "Queries are only allowed after the Key pool has been saved.",
-      "startQuery": "Start Query"
+      "startQuery": "Start Query",
+      "resumeQuery": "Resume",
+      "retryFailed": "Retry Failed",
+      "estimatedCalls": "Estimated SerpAPI attempts: {count}"
     },
     "status": {
       "success": "Query completed. {found} hits out of {total} keywords.",
-      "partial": "Query partially completed. {found} hits, {failed} failed."
+      "partial": "Query partially completed. {found} hits, {failed} failed.",
+      "paused": "Query paused. {found} hits so far out of {total} processed rows.",
+      "failed": "Query failed before any result was completed."
     },
     "metrics": {
       "total": "Total",
@@ -56,7 +61,7 @@
         "roundRobin": "Round Robin",
         "roundRobinDesc": "Distribute requests evenly across all keys in the pool.",
         "sequential": "Sequential",
-        "sequentialDesc": "Use keys sequentially until the current key is exhausted."
+        "sequentialDesc": "Process the batch in order and switch to the next key after a key fails."
       },
       "health": {
         "label": "Key health",
