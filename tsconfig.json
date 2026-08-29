@@ -1,0 +1,3 @@
+{
+  "extends": "@toolora/config/tsconfig.base.json"
+}
