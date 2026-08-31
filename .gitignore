@@ -56,3 +56,7 @@ coverage
 .cache
 tmp
 temp
+
+.agents/
+codex/
+docs/research/

@@ -1,0 +1,72 @@
+# Toolora Design QA
+
+Scope: Phase 1 Tool shell, Manifest, and Homepage Catalog.
+
+## Evidence
+
+- Source visual truth: `docs/design/toolora/options/homepage-catalog-reference.png`
+- Browser-rendered implementation: `docs/design/toolora/qa/home-phase1-final.png`
+- Browser-comment revision: `docs/design/toolora/qa/home-phase1-revised.png`
+- Tool-shell revision: `docs/design/toolora/qa/tool-shell-phase1-revised.png`
+- Full-view comparison: `docs/design/toolora/qa/home-phase1-comparison.png`
+- Focused content comparison: `docs/design/toolora/qa/home-phase1-focus-comparison.png`
+- Mobile Dark state: `docs/design/toolora/qa/home-phase1-mobile-dark.png`
+- Desktop viewport and CSS size: 2237 × 1309 px
+- Source pixels: 2237 × 1309 px
+- Implementation pixels: 2237 × 1309 px
+- Device scale factor: browser default; both comparison halves use their native pixels with no resampling
+- State: Chinese Homepage Catalog, Light theme, no query, all categories
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain in the Phase 1 scope.
+
+- Fonts and typography: Geist preserves the restrained sans-serif hierarchy; Chinese fallback renders cleanly with comparable weights and line lengths.
+- Spacing and layout rhythm: the centered shell, large search frame, category rail, catalog heading, rounded cards, and generous whitespace follow the reference. The second card is an intentional product difference because Toolora now exposes two Tools.
+- Colors and visual tokens: neutral Light and Dark palettes, thin borders, muted labels, and black primary actions match the selected direction.
+- Image quality and assets: this surface has no raster imagery or custom brand illustration. Standard UI symbols come from the installed icon library; no placeholder or handcrafted SVG asset is present.
+- Copy and content: Chinese-only labels, Tool names, descriptions, category counts, and actions match the accepted Manifest. The language control is intentionally absent.
+
+## Interaction And Accessibility Evidence
+
+- Search submit filters by name and description and renders safe highlighted text.
+- A category name entered as a query produces the expected empty state.
+- Category buttons, both explicit Tool routes, and the `打开` links work.
+- Light, Dark, and System selections work; the mobile Dark capture has no horizontal overflow.
+- `Ctrl+K` / `Cmd+K` focuses the search field.
+- No custom motion is introduced in Phase 1, so reduced-motion users receive no layout animation.
+- Browser console: no errors or warnings in the final production capture.
+
+## Comparison History
+
+1. Initial development capture: `docs/design/toolora/qa/home-phase1.png`.
+   - Finding: P2 developer-only TanStack Query trigger appeared over the product surface.
+   - Fix: removed the unused React Query Devtools component and dependency.
+2. Post-fix production capture: `docs/design/toolora/qa/home-phase1-final.png`.
+   - Evidence: the overlay is gone; the same-state full and focused comparisons show no remaining P0/P1/P2 mismatch.
+3. Browser-comment revision at 1628 × 1272: `docs/design/toolora/qa/home-phase1-revised.png`.
+   - Findings: the local container and cards were wider than the original Toolora layout, the theme trigger used an outlined button, and the desktop input text was too small.
+   - Fixes: migrated the original `max-w-7xl`, `280px` category rail, three-column card grid, borderless theme trigger, and `18px` medium-weight input sizing.
+   - Post-fix evidence: measured container 1280 px, category rail 280 px, card 312 px, input 18 px, theme border 0 px, no horizontal overflow, and no browser console errors or warnings.
+4. Tool-shell browser-comment revision at 1550 × 1272: `docs/design/toolora/qa/tool-shell-phase1-revised.png`.
+   - Findings: Tool pages still used the narrower shell, the Workspace header did not establish the original two-sided flex layout, and the theme control still opened a menu.
+   - Fixes: moved the shared Tool shell to `max-w-7xl`, migrated the original hero and Workspace heading scale, forced the Workspace header to `flex` with `space-between`, and replaced the menu with the original one-click Light/Dark toggle and circular View Transition reveal.
+   - Post-fix evidence: Tool shell, hero, and Workspace each measure 1280 px; the Workspace header reports `display: flex` and `justify-content: space-between`; heading/button sizes are 24/14 px; the theme changes Light ↔ Dark without creating a menu; reduced motion uses the immediate fallback; and the browser console is clean.
+
+## Open Questions
+
+None for Phase 1. Tool workspaces and the Settings Sheet remain intentionally minimal until their implementation phases.
+
+## Implementation Checklist
+
+- [x] Homepage hierarchy follows the selected Catalog reference.
+- [x] Manifest drives search, category counts, cards, and explicit routes.
+- [x] Shared Tool shell exposes the local Settings entry point.
+- [x] Desktop and mobile browser states verified.
+- [x] Light, Dark, System, keyboard search focus, empty state, and console verified.
+
+## Follow-up Polish
+
+The native circular theme transition and reduced-motion fallback are implemented. Phase 6 only needs to revalidate them against the completed Tool states.
+
+final result: passed

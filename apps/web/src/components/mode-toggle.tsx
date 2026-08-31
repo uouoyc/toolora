@@ -1,31 +1,53 @@
 "use client";
 
-import { Button } from "@toolora/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@toolora/ui/components/dropdown-menu";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import * as React from "react";
+import { type MouseEvent, useSyncExternalStore } from "react";
+
+const subscribe = () => () => undefined;
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+
+  if (!mounted) {
+    return <div aria-hidden="true" className="size-9" />;
+  }
+
+  function toggleTheme(event: MouseEvent<HTMLButtonElement>) {
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reduceMotion || !document.startViewTransition) {
+      setTheme(nextTheme);
+      return;
+    }
+
+    document.documentElement.style.setProperty("--x", `${event.clientX}px`);
+    document.documentElement.style.setProperty("--y", `${event.clientY}px`);
+    document.startViewTransition(() => setTheme(nextTheme));
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
-        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        <span className="sr-only">Toggle theme</span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <button
+      aria-label="toggle color theme"
+      className="cursor-pointer rounded-full p-2 transition-transform active:scale-90"
+      onClick={toggleTheme}
+      type="button"
+    >
+      {resolvedTheme === "dark" ? (
+        <Sun aria-hidden="true" className="size-5" />
+      ) : (
+        <Moon aria-hidden="true" className="size-5" />
+      )}
+    </button>
   );
 }

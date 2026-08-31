@@ -1,8 +1,7 @@
 {
   "extends": "@toolora/config/tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
-    "outDir": "dist",
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"]
     },

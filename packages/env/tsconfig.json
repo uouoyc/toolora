@@ -1,3 +1,6 @@
 {
-  "extends": "@toolora/config/tsconfig.base.json"
+  "extends": "@toolora/config/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  }
 }

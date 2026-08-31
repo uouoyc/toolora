@@ -6,11 +6,11 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "check-types": "tsc --noEmit",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run"
   },
   "dependencies": {
     "@orpc/client": "catalog:",
-    "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "^1.14.12",
     "@swc/helpers": "^0.5.23",
     "@tanstack/react-query": "^5.101.4",
@@ -18,23 +18,21 @@
     "@toolora/env": "workspace:*",
     "@toolora/ui": "workspace:*",
     "babel-plugin-react-compiler": "^1.0.0",
-    "dotenv": "catalog:",
     "lucide-react": "catalog:",
     "next": "^16.3.0",
     "next-themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "sonner": "catalog:",
-    "zod": "catalog:"
+    "sonner": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",
-    "@tanstack/react-query-devtools": "^5.101.4",
     "@toolora/config": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

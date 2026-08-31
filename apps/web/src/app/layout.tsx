@@ -16,8 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "toolora",
-  description: "toolora",
+  title: {
+    default: "Toolora",
+    template: "%s · Toolora",
+  },
+  description:
+    "这是一个免费的在线工具集合，提供各种实用工具，帮助你更高效地完成任务。",
 };
 
 export default function RootLayout({
@@ -26,10 +30,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <Providers>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
+          <div className="grid min-h-svh grid-rows-[auto_1fr]">
             <Header />
             {children}
           </div>

@@ -16,19 +16,13 @@
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "check": "biome check --write ."
-  },
-  "dependencies": {
-    "@toolora/env": "workspace:*",
-    "dotenv": "catalog:",
-    "zod": "catalog:"
+    "check": "biome check .",
+    "fix": "biome check --write .",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
-    "@toolora/config": "workspace:*",
-    "@types/node": "catalog:",
-    "turbo": "^2.10.7",
-    "typescript": "catalog:"
+    "turbo": "^2.10.7"
   },
   "packageManager": "pnpm@11.22.0"
 }
