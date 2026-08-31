@@ -26,6 +26,8 @@ type SerpApiKeyEntry = {
   searchesLeft: number | null;
   hourlyUsed: number | null;
   hourlyLimit: number | null;
+  monthlyLimit: number | null;
+  planName: string | null;
   checkedAt: string | null;
 };
 
@@ -39,8 +41,8 @@ type SerpApiSettings = {
 - `id` is generated with `crypto.randomUUID()` when a unique Key is saved.
 - Key secrets are trimmed, empty values removed, and exact duplicates removed while preserving order.
 - No product count limit exists. `localStorage` and request-body limits remain trust boundaries.
-- Full secrets never enter IndexedDB, CSV, logs, URLs, error messages, screenshots, or result models.
-- The UI shows only masked Keys and never offers a reveal action.
+- Full secrets never enter IndexedDB, CSV, logs, URLs, error messages, or result models. Do not include them in screenshots.
+- The Key Pool textarea keeps saved Keys editable for the current browser user; the Key status table shows only masked values.
 
 ## Save failure
 
@@ -67,7 +69,7 @@ If the retry fails, continue in memory and show an unsaved state. Never call `lo
 
 Run eligibility order is `active`, then `unknown`. Other states do not participate. Block Run start only when no eligible Key exists.
 
-Account values are snapshots. The UI displays `checkedAt`. Successful searches do not decrement a local balance because SerpAPI cache hits may be free.
+Account values are snapshots. `checkedAt` remains stored for freshness-sensitive flows but is not a default Key Health table column. Key Health appears only after at least one Key has a snapshot. Successful searches do not decrement a local balance because SerpAPI cache hits may be free.
 
 ## Batch selection
 
@@ -111,7 +113,7 @@ Raw Provider messages remain server-side and are sanitized before logging.
 
 ## Security requirements
 
-- Search Keys travel only in JSON POST bodies.
+- Search Keys travel only in browser-to-Hono JSON POST bodies. SerpAPI's Account API requires the Key as the server adapter's fixed-host `api_key` query parameter; that outbound Provider exception is never logged, returned, or exposed in a browser/Toolora URL.
 - Server procedures fix the SerpAPI host and validate the Tool-specific Engine.
 - Hono applies request-body limits and strict Zod input/output validation.
 - Logs contain request ID, procedure, Toolora code, status, and duration only.

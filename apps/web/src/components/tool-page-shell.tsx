@@ -1,12 +1,10 @@
-import { Button } from "@toolora/ui/components/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@toolora/ui/components/card";
-import { Settings2 } from "lucide-react";
-
+import { SerpApiSettingsSheet } from "@/features/serpapi-settings/serpapi-settings-sheet";
 import type { ToolManifestItem } from "@/lib/tools";
 
 export function ToolPageShell({ tool }: { tool: ToolManifestItem }) {
@@ -26,13 +24,7 @@ export function ToolPageShell({ tool }: { tool: ToolManifestItem }) {
           <CardTitle className="font-bold text-2xl tracking-tight">
             工作区
           </CardTitle>
-          <Button
-            className="cursor-pointer gap-2 rounded-xl text-sm"
-            variant="outline"
-          >
-            <Settings2 data-icon="inline-start" />
-            打开设置
-          </Button>
+          <SerpApiSettingsSheet />
         </CardHeader>
         <CardContent className="px-0">
           <div className="grid min-h-72 place-items-center rounded-2xl border border-dashed text-muted-foreground text-sm">

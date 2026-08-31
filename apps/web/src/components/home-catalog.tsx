@@ -69,7 +69,7 @@ export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
             命令
           </span>
           <strong className="mt-2 text-lg">搜索架</strong>
-          <span className="mt-1 font-mono text-muted-foreground text-xs">
+          <span className="mt-1 text-muted-foreground text-xs">
             ⌘ + K / Ctrl + K
           </span>
         </div>
@@ -91,7 +91,7 @@ export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
           />
         </label>
         <Button
-          className="min-h-14 rounded-2xl text-sm sm:min-h-24"
+          className="min-h-14 cursor-pointer rounded-2xl text-sm sm:min-h-24"
           type="submit"
         >
           搜索
@@ -169,7 +169,7 @@ function CategoryButton({
   return (
     <button
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors",
+        "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors",
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -186,7 +186,7 @@ function CategoryButton({
         {icon}
       </span>
       <span className="font-medium">{label}</span>
-      <span className="ml-auto font-mono text-xs opacity-70">
+      <span className="ml-auto text-xs opacity-70">
         {String(count).padStart(2, "0")}
       </span>
     </button>
@@ -205,12 +205,14 @@ function ToolCard({ query, tool }: { query: string; tool: ToolManifestItem }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex gap-2 px-5">
-        <span className="rounded-full border px-2.5 py-1 text-[0.65rem] uppercase tracking-wide">
-          SEO
-        </span>
-        <span className="rounded-full border px-2.5 py-1 text-[0.65rem] uppercase tracking-wide">
-          SERP
-        </span>
+        {tool.tags.map((tag) => (
+          <span
+            className="rounded-full border px-2.5 py-1 text-[0.65rem] uppercase tracking-wide"
+            key={tag}
+          >
+            {tag}
+          </span>
+        ))}
       </CardContent>
       <CardFooter className="border-0 px-5 pt-3">
         <Link

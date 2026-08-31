@@ -10,7 +10,7 @@ export function HighlightedText({
   return splitHighlightSegments(text, query).map((segment, index) =>
     segment.match ? (
       <mark
-        className="rounded-sm bg-primary/10 px-0.5 text-inherit dark:bg-primary/20"
+        className="rounded-sm bg-yellow-200/80 px-0.5 text-inherit dark:bg-yellow-400/30"
         key={`${segment.text}-${index}`}
       >
         {segment.text}

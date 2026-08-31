@@ -5,6 +5,7 @@ export type ToolManifestItem = {
   name: string;
   description: string;
   category: ToolCategory;
+  tags: readonly string[];
 };
 
 export const TOOLS = [
@@ -13,12 +14,14 @@ export const TOOLS = [
     name: "关键词排名查询",
     description: "批量查询关键词排名，快速定位目标域名的 SERP 位置。",
     category: "SEO 优化",
+    tags: ["SEO", "SERP"],
   },
   {
     slug: "keyword-clustering",
     name: "关键词聚类",
     description: "根据 Google 搜索结果重叠，将适合共用页面的关键词整理为聚类。",
     category: "SEO 优化",
+    tags: ["SEO", "SERP"],
   },
 ] as const satisfies readonly ToolManifestItem[];
 

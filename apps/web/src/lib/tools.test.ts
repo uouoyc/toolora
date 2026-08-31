@@ -12,6 +12,7 @@ describe("Tool Catalog", () => {
       expect(tool.name).not.toBe("");
       expect(tool.description).not.toBe("");
       expect(tool.category).toBe("SEO 优化");
+      expect(tool.tags.length).toBeGreaterThan(0);
     }
   });
 
