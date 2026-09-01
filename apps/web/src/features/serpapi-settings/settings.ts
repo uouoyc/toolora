@@ -27,6 +27,9 @@ type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
 export const SERP_API_SETTINGS_STORAGE_KEY = "toolora:serpapi-settings";
 
+export const SERP_API_SETTINGS_CHANGED_EVENT =
+  "toolora:serpapi-settings-changed";
+
 export function createEmptySettings(): SerpApiSettings {
   return { schemaVersion: 1, strategy: "round-robin", keys: [] };
 }

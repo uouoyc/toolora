@@ -38,6 +38,7 @@ import {
   maskKey,
   normalizeKeyPool,
   resolveStorageFailure,
+  SERP_API_SETTINGS_CHANGED_EVENT,
   type SerpApiSettings,
   saveSettings,
 } from "./settings";
@@ -81,6 +82,7 @@ export function SerpApiSettingsSheet() {
     const result = saveSettings(window.localStorage, next);
     setUnsaved(!result.persisted);
     setShowRecovery(!result.persisted);
+    window.dispatchEvent(new Event(SERP_API_SETTINGS_CHANGED_EVENT));
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -331,11 +333,17 @@ export function SerpApiSettingsSheet() {
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => resolveRecovery("memory")}
-              render={<Button variant="outline" />}
+              render={
+                <Button
+                  className="h-10 cursor-pointer rounded-xl px-4 text-sm"
+                  variant="outline"
+                />
+              }
             >
               仅本次使用，不保存
             </AlertDialogCancel>
             <AlertDialogAction
+              className="h-10 cursor-pointer rounded-xl px-4 text-sm"
               onClick={() => resolveRecovery("retry")}
               type="button"
             >
