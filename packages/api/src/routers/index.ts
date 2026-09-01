@@ -1,10 +1,10 @@
 import type { RouterClient } from "@orpc/server";
-
 import {
   SerpApiCheckKeysInputSchema,
   SerpApiCheckKeysOutputSchema,
 } from "../contracts/serpapi";
 import { publicProcedure } from "../index";
+import { keywordRankingProcedures } from "../procedures/keyword-ranking";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -16,6 +16,7 @@ export const appRouter = {
       .output(SerpApiCheckKeysOutputSchema)
       .handler(({ context, input }) => context.serpApi.checkKeys(input.keys)),
   },
+  keywordRanking: keywordRankingProcedures,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

@@ -23,7 +23,7 @@ export const TooloraErrorCodeSchema = z.enum([
 
 export const SerpApiKeyInputSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     secret: z.string().trim().min(1).max(512),
   })
   .strict();
@@ -37,7 +37,7 @@ export const SerpApiCheckKeysInputSchema = z
 export const SerpApiKeyCheckSchema = z
   .object({
     accountId: z.string().nullable(),
-    checkedAt: z.string().datetime(),
+    checkedAt: z.iso.datetime(),
     code: TooloraErrorCodeSchema.nullable(),
     hourlyLimit: z.number().nonnegative().nullable(),
     hourlyUsed: z.number().nonnegative().nullable(),

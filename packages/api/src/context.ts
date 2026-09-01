@@ -1,4 +1,8 @@
 import type {
+  KeywordRankingBatchInput,
+  KeywordRankingBatchOutput,
+} from "./contracts/keyword-ranking";
+import type {
   SerpApiCheckKeysInput,
   SerpApiCheckKeysOutput,
 } from "./contracts/serpapi";
@@ -7,6 +11,9 @@ export type SerpApiClient = {
   checkKeys: (
     keys: SerpApiCheckKeysInput["keys"],
   ) => Promise<SerpApiCheckKeysOutput>;
+  runKeywordRankingBatch: (
+    input: KeywordRankingBatchInput,
+  ) => Promise<KeywordRankingBatchOutput>;
 };
 
 export function createContext({ serpApi }: { serpApi: SerpApiClient }) {

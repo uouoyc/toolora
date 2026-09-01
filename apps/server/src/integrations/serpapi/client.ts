@@ -1,10 +1,17 @@
 import type {
+  KeywordRankingBatchInput,
+  KeywordRankingBatchOutput,
+  KeywordRankingFailure,
+  KeywordRankingResult,
+} from "@toolora/api/contracts/keyword-ranking";
+import type {
   SerpApiCheckKeysInput,
   SerpApiCheckKeysOutput,
 } from "@toolora/api/contracts/serpapi";
 import { z } from "zod";
 
 const ACCOUNT_URL = "https://serpapi.com/account.json";
+const SEARCH_URL = "https://serpapi.com/search.json";
 const CONCURRENCY = 10;
 const TIMEOUT_MS = 15_000;
 
@@ -17,8 +24,24 @@ const AccountResponseSchema = z.object({
   total_searches_left: z.number().nonnegative(),
 });
 
+const SearchResponseSchema = z.object({
+  error: z.string().optional(),
+  organic_results: z
+    .array(
+      z.object({
+        link: z.url(),
+        position: z.number().int().positive(),
+      }),
+    )
+    .optional(),
+});
+
 type SerpApiKey = SerpApiCheckKeysInput["keys"][number];
 type KeyCheckResult = SerpApiCheckKeysOutput["results"][string];
+type KeywordRankingOutcome = {
+  failure: KeywordRankingFailure | null;
+  result: KeywordRankingResult;
+};
 
 function createKeyCheckResult(
   status: KeyCheckResult["status"],
@@ -95,6 +118,128 @@ async function checkKey(key: SerpApiKey): Promise<[string, KeyCheckResult]> {
   }
 }
 
+function isTargetDomain(url: string, targetDomain: string) {
+  return (
+    new URL(url).hostname.toLowerCase().replace(/^www\./, "") === targetDomain
+  );
+}
+
+function failedOutcome(
+  keyword: string,
+  errorCode: KeywordRankingFailure["errorCode"],
+  httpStatus: number | null,
+): KeywordRankingOutcome {
+  return {
+    failure: { errorCode, httpStatus, keyword },
+    result: {
+      errorCode,
+      fetchedAt: null,
+      keyword,
+      rank: null,
+      status: "failed",
+      url: null,
+    },
+  };
+}
+
+async function errorCodeFor(response: Response, key: SerpApiKey) {
+  if (response.status === 401) {
+    return "INVALID_KEY" as const;
+  }
+  if (response.status === 403) {
+    return "KEY_FORBIDDEN" as const;
+  }
+  if (response.status === 429) {
+    const [, check] = await checkKey(key);
+    return check.code === "QUOTA_EXHAUSTED" || check.code === "RATE_LIMITED"
+      ? check.code
+      : ("RATE_LIMITED" as const);
+  }
+  if (response.status >= 500) {
+    return "PROVIDER_UNAVAILABLE" as const;
+  }
+  return "UNKNOWN_PROVIDER_ERROR" as const;
+}
+
+async function rankKeyword(
+  input: KeywordRankingBatchInput,
+  keyword: string,
+): Promise<KeywordRankingOutcome> {
+  try {
+    for (let start = 0; start < input.searchDepth; start += 10) {
+      const url = new URL(SEARCH_URL);
+      url.searchParams.set("api_key", input.key.secret);
+      url.searchParams.set("engine", "google_light");
+      url.searchParams.set("gl", input.country);
+      url.searchParams.set("hl", input.language);
+      url.searchParams.set("q", keyword);
+      url.searchParams.set("start", String(start));
+
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        return failedOutcome(
+          keyword,
+          await errorCodeFor(response, input.key),
+          response.status,
+        );
+      }
+
+      const payload = SearchResponseSchema.parse(await response.json());
+      if (payload.error) {
+        return failedOutcome(
+          keyword,
+          "UNKNOWN_PROVIDER_ERROR",
+          response.status,
+        );
+      }
+
+      const organicResults = payload.organic_results ?? [];
+      const match = organicResults
+        .filter((result) => isTargetDomain(result.link, input.targetDomain))
+        .reduce(
+          (highest, result) =>
+            !highest || result.position < highest.position ? result : highest,
+          undefined as (typeof organicResults)[number] | undefined,
+        );
+      if (match) {
+        return {
+          failure: null,
+          result: {
+            errorCode: null,
+            fetchedAt: new Date().toISOString(),
+            keyword,
+            rank: start + match.position,
+            status: "found",
+            url: match.link,
+          },
+        };
+      }
+    }
+
+    return {
+      failure: null,
+      result: {
+        errorCode: null,
+        fetchedAt: new Date().toISOString(),
+        keyword,
+        rank: null,
+        status: "not-found",
+        url: null,
+      },
+    };
+  } catch (error) {
+    return failedOutcome(
+      keyword,
+      error instanceof DOMException && error.name === "TimeoutError"
+        ? "REQUEST_TIMEOUT"
+        : "PROVIDER_UNAVAILABLE",
+      null,
+    );
+  }
+}
+
 export const serpApiClient = {
   async checkKeys(keys: SerpApiCheckKeysInput["keys"]) {
     const results: Array<[string, KeyCheckResult]> = [];
@@ -113,5 +258,18 @@ export const serpApiClient = {
       Array.from({ length: Math.min(CONCURRENCY, keys.length) }, worker),
     );
     return { results: Object.fromEntries(results) };
+  },
+  async runKeywordRankingBatch(
+    input: KeywordRankingBatchInput,
+  ): Promise<KeywordRankingBatchOutput> {
+    const outcomes = await Promise.all(
+      input.keywords.map((keyword) => rankKeyword(input, keyword)),
+    );
+    return {
+      failures: outcomes.flatMap((outcome) =>
+        outcome.failure ? [outcome.failure] : [],
+      ),
+      results: outcomes.map((outcome) => outcome.result),
+    };
   },
 };
