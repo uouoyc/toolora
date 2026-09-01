@@ -2,7 +2,22 @@
 
 ## Purpose
 
-SerpAPI Settings is the shared browser-local BYOK configuration for SerpAPI-backed Tools. It owns Key entry, Account checks, status display, and batch Key selection. It does not own Tool inputs, results, Workspaces, or server state.
+SerpAPI Settings is the shared browser-local BYOK configuration for SerpAPI-backed Tools. It owns Key entry, Account checks, status display, batch Key selection, and the official SerpAPI locale snapshots. It does not own Tool inputs, results, Workspaces, or server state.
+
+## Locale data
+
+Both snapshots are committed once and never fetched at runtime:
+
+```text
+apps/web/src/features/serpapi-settings/data/
+├── serpapi-countries.json   # official `gl` entries: country_code / country_name
+└── serpapi-languages.json   # official `hl` entries: language_code / language_name
+```
+
+- The country dropdown offers the complete official list; the language dropdown offers the curated snapshot, which excludes `xx-*` placeholder locales.
+- Provider codes are lowercase and may be multi-part (`zh-cn`, `pt-br`, `pt-pt`, `sr-me`, `es-419`).
+- Tool UIs validate country/language by exact snapshot membership; the shared contracts validate only the transport shape (at most two lowercase segments) so Key and Tool contracts stay snapshot-agnostic.
+- Ranking and future Clustering reuse the same dropdown data from this feature; Clustering fixes Evidence at Top 10 and exposes no depth selector.
 
 ## Storage
 

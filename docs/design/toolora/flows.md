@@ -19,14 +19,14 @@
 
 ## 3. Keyword Ranking
 
-1. Visitor enters exact Target Domain, keywords, country, language, and Search Depth.
-2. Existing Workspace offers Add to Current Query or Start New Query.
-3. Evidence older than 24 hours triggers New Only versus Refresh All choice.
-4. Pre-run Dialog summarizes keyword count, estimated calls, query settings, and eligible Keys.
-5. Initial phase runs bounded batches without retry.
-6. Failed queue runs after every initial batch settles.
-7. Visitor can pause scheduling, refresh/restore, retry final failures, inspect results, and export CSV.
-8. Starting a new query offers export before replacing the Workspace.
+1. Visitor enters exact Target Domain, keywords, and picks country/region, language, and Search Depth from SerpAPI snapshot dropdowns.
+2. An inline run hint states the Key prerequisite and the estimated SerpAPI request count.
+3. 开始查询 is disabled while the form is incomplete, no Key is saved, or a Run is in progress.
+4. Clicking 开始查询 directly runs automatic Key health checking, clears prior results, and starts the complete Run over all current textarea keywords and settings; no pre-run or append/replace Dialog appears.
+5. Initial phase runs bounded batches without retry; stable `keyword -> keyId` affinity routes bound keywords to their Key.
+6. Failed queue runs after every initial batch settles and rotates Keys only for Key-specific errors.
+7. Visitor can pause scheduling, resume after refresh, retry final failures, inspect results, and export CSV.
+8. Textarea edits define the next Run: removed keywords disappear from the Workspace and result table on the next Run.
 
 ## 4. Keyword Clustering
 
