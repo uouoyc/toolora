@@ -9,11 +9,16 @@ import type {
   SerpApiCheckKeysOutput,
 } from "@toolora/api/contracts/serpapi";
 import { z } from "zod";
+import {
+  httpStatusErrorCode,
+  networkErrorCode,
+  REQUEST_TIMEOUT_MS,
+  searchErrorCodeFor,
+} from "./errors";
+import { buildGoogleLightSearchUrl } from "./google-light";
 
 const ACCOUNT_URL = "https://serpapi.com/account.json";
-const SEARCH_URL = "https://serpapi.com/search.json";
 const CONCURRENCY = 10;
-const TIMEOUT_MS = 15_000;
 
 const AccountResponseSchema = z.object({
   account_id: z.string().min(1),
@@ -68,7 +73,7 @@ async function checkKey(key: SerpApiKey): Promise<[string, KeyCheckResult]> {
 
   try {
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (response.status === 401) {
       return [key.id, createKeyCheckResult("invalid", "INVALID_KEY")];
@@ -82,12 +87,7 @@ async function checkKey(key: SerpApiKey): Promise<[string, KeyCheckResult]> {
     if (!response.ok) {
       return [
         key.id,
-        createKeyCheckResult(
-          "unknown",
-          response.status >= 500
-            ? "PROVIDER_UNAVAILABLE"
-            : "UNKNOWN_PROVIDER_ERROR",
-        ),
+        createKeyCheckResult("unknown", httpStatusErrorCode(response.status)),
       ];
     }
 
@@ -106,16 +106,13 @@ async function checkKey(key: SerpApiKey): Promise<[string, KeyCheckResult]> {
     }
     return [key.id, createKeyCheckResult("active", null, account)];
   } catch (error) {
-    return [
-      key.id,
-      createKeyCheckResult(
-        "unknown",
-        error instanceof DOMException && error.name === "TimeoutError"
-          ? "REQUEST_TIMEOUT"
-          : "PROVIDER_UNAVAILABLE",
-      ),
-    ];
+    return [key.id, createKeyCheckResult("unknown", networkErrorCode(error))];
   }
+}
+
+async function keyCheckResult(key: SerpApiKey) {
+  const [, check] = await checkKey(key);
+  return check;
 }
 
 function isTargetDomain(url: string, targetDomain: string) {
@@ -142,46 +139,27 @@ function failedOutcome(
   };
 }
 
-async function errorCodeFor(response: Response, key: SerpApiKey) {
-  if (response.status === 401) {
-    return "INVALID_KEY" as const;
-  }
-  if (response.status === 403) {
-    return "KEY_FORBIDDEN" as const;
-  }
-  if (response.status === 429) {
-    const [, check] = await checkKey(key);
-    return check.code === "QUOTA_EXHAUSTED" || check.code === "RATE_LIMITED"
-      ? check.code
-      : ("RATE_LIMITED" as const);
-  }
-  if (response.status >= 500) {
-    return "PROVIDER_UNAVAILABLE" as const;
-  }
-  return "UNKNOWN_PROVIDER_ERROR" as const;
-}
-
 async function rankKeyword(
   input: KeywordRankingBatchInput,
   keyword: string,
 ): Promise<KeywordRankingOutcome> {
   try {
     for (let start = 0; start < input.searchDepth; start += 10) {
-      const url = new URL(SEARCH_URL);
-      url.searchParams.set("api_key", input.key.secret);
-      url.searchParams.set("engine", "google_light");
-      url.searchParams.set("gl", input.country);
-      url.searchParams.set("hl", input.language);
-      url.searchParams.set("q", keyword);
-      url.searchParams.set("start", String(start));
+      const url = buildGoogleLightSearchUrl({
+        gl: input.country,
+        hl: input.language,
+        q: keyword,
+        secret: input.key.secret,
+        start,
+      });
 
       const response = await fetch(url, {
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       if (!response.ok) {
         return failedOutcome(
           keyword,
-          await errorCodeFor(response, input.key),
+          await searchErrorCodeFor(response, () => keyCheckResult(input.key)),
           response.status,
         );
       }
@@ -230,13 +208,7 @@ async function rankKeyword(
       },
     };
   } catch (error) {
-    return failedOutcome(
-      keyword,
-      error instanceof DOMException && error.name === "TimeoutError"
-        ? "REQUEST_TIMEOUT"
-        : "PROVIDER_UNAVAILABLE",
-      null,
-    );
+    return failedOutcome(keyword, networkErrorCode(error), null);
   }
 }
 
