@@ -3,13 +3,18 @@ import {
   KeywordRankingInputSchema,
   type KeywordRankingResult,
 } from "@toolora/api/contracts/keyword-ranking";
+import type { RunFailure } from "../../lib/keyword-run/types";
 
-export type FailedKeyword = {
-  attemptedKeyIds: string[];
-  errorCode: Extract<KeywordRankingResult, { status: "failed" }>["errorCode"];
-  httpStatus: number | null;
-  keyword: string;
-};
+export type FailedKeyword = RunFailure;
+
+export {
+  createRetryBatches,
+  splitKeywordBatches,
+} from "../../lib/keyword-run/batches";
+export {
+  bindSuccessfulKeywords,
+  pruneKeywordBindings,
+} from "../../lib/keyword-run/key-affinity";
 
 export type KeywordRankingWorkspace = {
   input: KeywordRankingInput;
@@ -36,16 +41,6 @@ export function createWorkspace(input: unknown): KeywordRankingWorkspace {
   };
 }
 
-export function pruneKeywordBindings(
-  keyIdByKeyword: Readonly<Record<string, string>>,
-  keywords: readonly string[],
-) {
-  const retained = new Set(keywords);
-  return Object.fromEntries(
-    Object.entries(keyIdByKeyword).filter(([keyword]) => retained.has(keyword)),
-  );
-}
-
 export function restoreWorkspace(workspace: KeywordRankingWorkspace | null) {
   if (workspace?.schemaVersion !== 2) {
     return null;
@@ -54,57 +49,6 @@ export function restoreWorkspace(workspace: KeywordRankingWorkspace | null) {
   return workspace.run.status === "running"
     ? { ...workspace, run: { ...workspace.run, status: "paused" as const } }
     : workspace;
-}
-
-export function bindSuccessfulKeywords(
-  keyIdByKeyword: Readonly<Record<string, string>>,
-  keyId: string,
-  results: readonly KeywordRankingResult[],
-) {
-  const next = { ...keyIdByKeyword };
-  for (const result of results) {
-    if (result.status !== "failed") {
-      next[result.keyword] = keyId;
-    }
-  }
-  return next;
-}
-
-export function splitKeywordBatches(keywords: readonly string[]) {
-  return Array.from({ length: Math.ceil(keywords.length / 5) }, (_, index) =>
-    keywords.slice(index * 5, index * 5 + 5),
-  );
-}
-
-export function createRetryBatches(
-  failures: readonly FailedKeyword[],
-  keys: readonly { id: string; status?: string }[],
-) {
-  const grouped = new Map<string, string[]>();
-  const unresolved: string[] = [];
-
-  for (const failure of failures) {
-    const key = keys.find(
-      (candidate) =>
-        (candidate.status === "active" || candidate.status === "unknown") &&
-        !failure.attemptedKeyIds.includes(candidate.id),
-    );
-    if (!key) {
-      unresolved.push(failure.keyword);
-      continue;
-    }
-    grouped.set(key.id, [...(grouped.get(key.id) ?? []), failure.keyword]);
-  }
-
-  return {
-    batches: Array.from(grouped, ([keyId, keywords]) =>
-      splitKeywordBatches(keywords).map((batch) => ({
-        keyId,
-        keywords: batch,
-      })),
-    ).flat(),
-    unresolved,
-  };
 }
 
 export function summarizeResults(results: readonly KeywordRankingResult[]) {
