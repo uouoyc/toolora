@@ -27,13 +27,12 @@ import {
   SERPAPI_COUNTRIES,
   SERPAPI_LANGUAGES,
 } from "../serpapi-settings/locales";
+import { settingsForRun } from "../serpapi-settings/run-settings";
 import { SerpApiSettingsSheet } from "../serpapi-settings/serpapi-settings-sheet";
 import {
-  applyAccountChecks,
-  createRunConfig,
+  isEligible,
   loadSettings,
   SERP_API_SETTINGS_CHANGED_EVENT,
-  saveSettings,
   selectBatchKeys,
 } from "../serpapi-settings/settings";
 import {
@@ -212,33 +211,10 @@ export function KeywordRankingWorkspace() {
     return parsed.data;
   }
 
-  async function settingsForRun() {
-    const saved = loadSettings(window.localStorage);
-    if (saved.keys.length === 0) {
-      throw new Error("请先在设置中添加 SerpAPI Key。");
-    }
-
-    let checked = saved;
-    try {
-      const response = await client.serpApi.checkKeys({
-        keys: saved.keys.map(({ id, secret }) => ({ id, secret })),
-      });
-      checked = {
-        ...saved,
-        keys: applyAccountChecks(saved.keys, response.results),
-      };
-      saveSettings(window.localStorage, checked);
-    } catch {
-      throw new Error("无法检测 SerpAPI Key，请稍后重试。");
-    }
-
-    const eligible = checked.keys.filter(
-      (key) => key.status === "active" || key.status === "unknown",
+  function runSettings() {
+    return settingsForRun(window.localStorage, (keys) =>
+      client.serpApi.checkKeys({ keys }),
     );
-    if (eligible.length === 0) {
-      throw new Error("没有可用的 SerpAPI Key，请先检测 Key 状态。");
-    }
-    return createRunConfig(checked);
   }
 
   async function runCore(
@@ -254,11 +230,9 @@ export function KeywordRankingWorkspace() {
     pauseRef.current = false;
 
     try {
-      const settings = await settingsForRun();
+      const settings = await runSettings();
       const eligibleKeyIds = new Set(
-        settings.keys
-          .filter((key) => key.status === "active" || key.status === "unknown")
-          .map((key) => key.id),
+        settings.keys.filter(isEligible).map((key) => key.id),
       );
       const preferredKeyIdByKeyword = Object.fromEntries(
         plan.fetchKeywords.flatMap((keyword) => {
@@ -483,7 +457,7 @@ export function KeywordRankingWorkspace() {
     pauseRef.current = false;
     setError(null);
     try {
-      const settings = await settingsForRun();
+      const settings = await runSettings();
       const retainedFailures = current.run.failures.filter(
         (failure) => !selectedFailures.includes(failure),
       );

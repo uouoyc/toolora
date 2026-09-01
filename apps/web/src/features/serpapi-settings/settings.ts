@@ -23,7 +23,7 @@ export type SerpApiSettings = {
 
 export type KeyCheck = Omit<SerpApiKeyEntry, "id" | "secret">;
 
-type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
+export type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
 export const SERP_API_SETTINGS_STORAGE_KEY = "toolora:serpapi-settings";
 
@@ -126,7 +126,8 @@ export function resolveStorageFailure(
   return saveSettings(storage, settings);
 }
 
-function isEligible(key: SerpApiKeyEntry) {
+/** A Key may serve a Run only after a health check marked it active (or unknown). */
+export function isEligible(key: SerpApiKeyEntry) {
   return key.status === "active" || key.status === "unknown";
 }
 
