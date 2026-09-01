@@ -20,7 +20,15 @@ import { Input } from "@toolora/ui/components/input";
 import { cn } from "@toolora/ui/lib/utils";
 import { ArrowUpRight, Grid2X2, Search } from "lucide-react";
 import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  type SubmitEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { HighlightedText } from "@/components/highlighted-text";
 import {
@@ -30,16 +38,59 @@ import {
 } from "@/lib/tools";
 
 const ALL_TOOLS = "全部工具";
+const ALL_KEY = "__all__";
+
+function categoryKey(category: ToolCategory | null) {
+  return category ?? ALL_KEY;
+}
 
 export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<ToolCategory | null>(null);
+  const [contentMotion, setContentMotion] = useState<{
+    dir: 1 | -1;
+    key: string;
+  } | null>(null);
+  const [indicator, setIndicator] = useState<{
+    height: number;
+    top: number;
+  } | null>(null);
+  const [indicatorReady, setIndicatorReady] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const buttonRefs = useRef(new Map<string, HTMLButtonElement>());
   const categories = useMemo(
     () => [...new Set(tools.map((tool) => tool.category))],
     [tools],
   );
   const visibleTools = filterTools(tools, { query, category });
+  const activeKey = categoryKey(category);
+
+  const measureIndicator = useCallback(() => {
+    const button = buttonRefs.current.get(activeKey);
+    if (!button) {
+      setIndicator(null);
+      return;
+    }
+    setIndicator({ height: button.offsetHeight, top: button.offsetTop });
+  }, [activeKey]);
+
+  useLayoutEffect(measureIndicator, [measureIndicator]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIndicatorReady(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(measureIndicator);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [measureIndicator]);
 
   useEffect(() => {
     function focusSearch(event: KeyboardEvent) {
@@ -53,9 +104,20 @@ export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
     return () => window.removeEventListener("keydown", focusSearch);
   }, []);
 
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
+  function handleSearch(event: SubmitEvent) {
     event.preventDefault();
     setQuery(queryInput.trim());
+  }
+
+  function selectCategory(next: ToolCategory | null) {
+    if (next === category) {
+      return;
+    }
+    const order = [ALL_KEY, ...categories];
+    const dir =
+      order.indexOf(categoryKey(next)) >= order.indexOf(activeKey) ? 1 : -1;
+    setCategory(next);
+    setContentMotion({ dir, key: `${categoryKey(next)}-${Date.now()}` });
   }
 
   return (
@@ -100,67 +162,118 @@ export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
       </form>
 
       <div className="mt-12 grid gap-8 lg:grid-cols-[280px_1fr]">
-        <aside aria-label="工具分类" className="space-y-2">
+        <aside
+          aria-label="工具分类"
+          className="relative space-y-2"
+          ref={navRef}
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              "absolute inset-x-0 z-0 rounded-xl bg-primary shadow-sm",
+              indicatorReady &&
+                "transition-[height,transform] duration-300 ease-out motion-reduce:transition-none",
+              indicator ? "opacity-100" : "opacity-0",
+            )}
+            style={
+              indicator
+                ? {
+                    height: `${indicator.height}px`,
+                    transform: `translateY(${indicator.top}px)`,
+                  }
+                : undefined
+            }
+          />
           <CategoryButton
             active={category === null}
+            buttonRef={(element) => {
+              registerButton(ALL_KEY, element);
+            }}
             count={tools.length}
             icon={<Grid2X2 aria-hidden="true" />}
             label={ALL_TOOLS}
-            onClick={() => setCategory(null)}
+            onClick={() => selectCategory(null)}
           />
           {categories.map((item) => (
             <CategoryButton
               active={category === item}
+              buttonRef={(element) => {
+                registerButton(item, element);
+              }}
               count={tools.filter((tool) => tool.category === item).length}
-              key={item}
               icon={<Search aria-hidden="true" />}
+              key={item}
               label={item}
-              onClick={() => setCategory(item)}
+              onClick={() => selectCategory(item)}
             />
           ))}
         </aside>
 
         <section aria-labelledby="catalog-title">
-          <h1
-            className="mb-6 font-bold text-3xl tracking-tight"
-            id="catalog-title"
+          <div
+            className={
+              contentMotion
+                ? cn(
+                    "fade-in animate-in duration-300 motion-reduce:animate-none",
+                    contentMotion.dir > 0
+                      ? "slide-in-from-right-4"
+                      : "slide-in-from-left-4",
+                  )
+                : undefined
+            }
+            key={contentMotion?.key ?? "initial"}
           >
-            {category ?? ALL_TOOLS}
-          </h1>
+            <h1
+              className="mb-6 font-bold text-3xl tracking-tight"
+              id="catalog-title"
+            >
+              {category ?? ALL_TOOLS}
+            </h1>
 
-          {visibleTools.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {visibleTools.map((tool) => (
-                <ToolCard key={tool.slug} query={query} tool={tool} />
-              ))}
-            </div>
-          ) : (
-            <Empty className="min-h-64 rounded-2xl border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Search aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>没有匹配的工具</EmptyTitle>
-                <EmptyDescription>
-                  换一个关键词，或清除分类筛选后再试。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
+            {visibleTools.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {visibleTools.map((tool) => (
+                  <ToolCard key={tool.slug} query={query} tool={tool} />
+                ))}
+              </div>
+            ) : (
+              <Empty className="min-h-64 rounded-2xl border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Search aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>没有匹配的工具</EmptyTitle>
+                  <EmptyDescription>
+                    换一个关键词，或清除分类筛选后再试。
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+          </div>
         </section>
       </div>
     </main>
   );
+
+  function registerButton(key: string, element: HTMLButtonElement | null) {
+    if (element) {
+      buttonRefs.current.set(key, element);
+    } else {
+      buttonRefs.current.delete(key);
+    }
+  }
 }
 
 function CategoryButton({
   active,
+  buttonRef,
   count,
   icon,
   label,
   onClick,
 }: {
   active: boolean;
+  buttonRef: (element: HTMLButtonElement | null) => void;
   count: number;
   icon: React.ReactNode;
   label: string;
@@ -169,17 +282,18 @@ function CategoryButton({
   return (
     <button
       className={cn(
-        "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors",
+        "relative z-10 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors",
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
+          ? "text-primary-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
       onClick={onClick}
+      ref={buttonRef}
       type="button"
     >
       <span
         className={cn(
-          "grid size-8 place-items-center rounded-lg [&_svg]:size-4",
+          "grid size-8 place-items-center rounded-lg transition-colors [&_svg]:size-4",
           active ? "bg-primary-foreground/10" : "bg-muted",
         )}
       >
