@@ -15,7 +15,7 @@ function request(overrides: Partial<ClusterRequest> = {}): ClusterRequest {
   };
 }
 
-/** Structural invariants 1–7 from the Keyword Clustering specification. */
+/** Structural invariants every clustering output must satisfy. */
 function expectInvariants(output: KeywordCluster[], input: ClusterRequest) {
   const ids = new Set(output.map((cluster) => cluster.clusterId));
   expect(ids.size).toBe(output.length);

@@ -8,7 +8,6 @@ const PILL_TONES = {
   warning: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
 } as const;
 
-/** Status pill recipe with the shared semantic color matrix (§7 状态胶囊). */
 export function StatusPill({
   children,
   tone,

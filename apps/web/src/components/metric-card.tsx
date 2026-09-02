@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { Microlabel } from "@/components/microlabel";
 
-/** Metric card recipe shared by Tool summary rows (deconstruction §3.7).
- *  Render inside a `<dl>` grid; each card is one term/value pair. */
+/** Render inside a `<dl>` grid; each card is one term/value pair. */
 export function MetricCard({
   label,
   value,

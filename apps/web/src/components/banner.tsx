@@ -7,7 +7,6 @@ const BANNER_TONES = {
     "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
 } as const;
 
-/** Status banner recipe shared by Tool pages (deconstruction §7 状态横幅). */
 export function Banner({
   children,
   role = "status",

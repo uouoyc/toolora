@@ -37,8 +37,7 @@ function identityHost(identity: string) {
 
 /**
  * Deterministic complete-link agglomerative clustering over SERP page
- * identities. Only Evidence Ready keywords participate; every rule and
- * invariant of the Keyword Clustering specification applies.
+ * identities. Only keywords with non-empty Evidence participate.
  */
 export function clusterKeywords(request: ClusterRequest): KeywordCluster[] {
   const keywords = request.keywords.filter(

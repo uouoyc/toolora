@@ -1,7 +1,6 @@
 import { cn } from "@toolora/ui/lib/utils";
 import type { ReactNode } from "react";
 
-/** Flat section card recipe shared by Tool pages (deconstruction §7 区块卡). */
 export function SectionCard({
   children,
   className,

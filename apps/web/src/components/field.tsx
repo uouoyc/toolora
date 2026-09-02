@@ -1,7 +1,6 @@
 import { cn } from "@toolora/ui/lib/utils";
 import type { ReactNode } from "react";
 
-/** Field group recipe: 14px bold label above the control, 16px gap (§7 字段组). */
 export function Field({
   children,
   className,
@@ -21,7 +20,6 @@ export function Field({
   );
 }
 
-/** Control recipes for the shared field group (deconstruction §3.4). */
 export const toolInputClassName =
   "h-12 rounded-xl bg-background/50 px-4 text-base focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 md:text-base";
 export const toolSelectClassName =

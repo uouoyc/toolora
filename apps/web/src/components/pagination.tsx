@@ -22,7 +22,6 @@ function pageNumbers(current: number, total: number): (number | "...")[] {
   return pages;
 }
 
-/** Always-visible pagination footer recipe (deconstruction §3.9). */
 export function Pagination({
   onPageChange,
   onPageSizeChange,

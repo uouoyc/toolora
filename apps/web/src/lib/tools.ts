@@ -44,7 +44,6 @@ export function filterTools(
   });
 }
 
-/** Category count display: two-digit padded, capped at `99+` (deconstruction §3.11). */
 export function formatCategoryCount(count: number): string {
   return count > 99 ? "99+" : String(count).padStart(2, "0");
 }

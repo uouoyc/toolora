@@ -1,7 +1,6 @@
 import { cn } from "@toolora/ui/lib/utils";
 import type { ReactNode } from "react";
 
-/** Tool result table header cell recipe (deconstruction §7 表头格). */
 export function DataTableHead({
   children,
   className,
