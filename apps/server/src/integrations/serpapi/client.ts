@@ -1,4 +1,10 @@
 import type {
+  KeywordClusteringBatchInput,
+  KeywordClusteringBatchOutput,
+  KeywordClusteringFailure,
+  KeywordClusteringResult,
+} from "@toolora/api/contracts/keyword-clustering";
+import type {
   KeywordRankingBatchInput,
   KeywordRankingBatchOutput,
   KeywordRankingFailure,
@@ -16,6 +22,7 @@ import {
   searchErrorCodeFor,
 } from "./errors";
 import { buildGoogleLightSearchUrl } from "./google-light";
+import { getUrlIdentity } from "./url-key";
 
 const ACCOUNT_URL = "https://serpapi.com/account.json";
 const CONCURRENCY = 10;
@@ -41,11 +48,20 @@ const SearchResponseSchema = z.object({
     .optional(),
 });
 
+const ClusteringSearchResponseSchema = z.object({
+  error: z.string().optional(),
+  organic_results: z.array(z.object({ link: z.string() })).optional(),
+});
+
 type SerpApiKey = SerpApiCheckKeysInput["keys"][number];
 type KeyCheckResult = SerpApiCheckKeysOutput["results"][string];
 type KeywordRankingOutcome = {
   failure: KeywordRankingFailure | null;
   result: KeywordRankingResult;
+};
+type KeywordClusteringOutcome = {
+  failure: KeywordClusteringFailure | null;
+  result: KeywordClusteringResult;
 };
 
 function createKeyCheckResult(
@@ -212,6 +228,92 @@ async function rankKeyword(
   }
 }
 
+function failedClusteringOutcome(
+  keyword: string,
+  errorCode: KeywordClusteringFailure["errorCode"],
+  httpStatus: number | null,
+): KeywordClusteringOutcome {
+  return {
+    failure: { errorCode, httpStatus, keyword },
+    result: {
+      errorCode,
+      fetchedAt: null,
+      keyword,
+      status: "failed",
+      urls: [],
+    },
+  };
+}
+
+/** Evidence collection is one fixed Top 10 Google Light page per keyword. */
+async function collectEvidence(
+  input: KeywordClusteringBatchInput,
+  keyword: string,
+): Promise<KeywordClusteringOutcome> {
+  try {
+    const url = buildGoogleLightSearchUrl({
+      gl: input.country,
+      hl: input.language,
+      q: keyword,
+      secret: input.key.secret,
+    });
+
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      return failedClusteringOutcome(
+        keyword,
+        await searchErrorCodeFor(response, () => keyCheckResult(input.key)),
+        response.status,
+      );
+    }
+
+    const payload = ClusteringSearchResponseSchema.parse(await response.json());
+    if (payload.error) {
+      return failedClusteringOutcome(
+        keyword,
+        "UNKNOWN_PROVIDER_ERROR",
+        response.status,
+      );
+    }
+
+    // Keep the raw SERP URL, deduplicate on the page identity, first
+    // (highest-ranked) occurrence wins.
+    const seenIdentities = new Set<string>();
+    const urls: { url: string; urlIdentity: string }[] = [];
+    for (const entry of (payload.organic_results ?? []).slice(0, 10)) {
+      const urlIdentity = getUrlIdentity(entry.link);
+      if (urlIdentity !== null && !seenIdentities.has(urlIdentity)) {
+        seenIdentities.add(urlIdentity);
+        urls.push({ url: entry.link, urlIdentity });
+      }
+    }
+    const fetchedAt = new Date().toISOString();
+    return {
+      failure: null,
+      result:
+        urls.length > 0
+          ? {
+              errorCode: null,
+              fetchedAt,
+              keyword,
+              status: "evidence-ready",
+              urls,
+            }
+          : {
+              errorCode: null,
+              fetchedAt,
+              keyword,
+              status: "no-evidence",
+              urls: [],
+            },
+    };
+  } catch (error) {
+    return failedClusteringOutcome(keyword, networkErrorCode(error), null);
+  }
+}
+
 export const serpApiClient = {
   async checkKeys(keys: SerpApiCheckKeysInput["keys"]) {
     const results: Array<[string, KeyCheckResult]> = [];
@@ -236,6 +338,19 @@ export const serpApiClient = {
   ): Promise<KeywordRankingBatchOutput> {
     const outcomes = await Promise.all(
       input.keywords.map((keyword) => rankKeyword(input, keyword)),
+    );
+    return {
+      failures: outcomes.flatMap((outcome) =>
+        outcome.failure ? [outcome.failure] : [],
+      ),
+      results: outcomes.map((outcome) => outcome.result),
+    };
+  },
+  async runKeywordClusteringBatch(
+    input: KeywordClusteringBatchInput,
+  ): Promise<KeywordClusteringBatchOutput> {
+    const outcomes = await Promise.all(
+      input.keywords.map((keyword) => collectEvidence(input, keyword)),
     );
     return {
       failures: outcomes.flatMap((outcome) =>

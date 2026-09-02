@@ -4,6 +4,7 @@ import {
   SerpApiCheckKeysOutputSchema,
 } from "../contracts/serpapi";
 import { publicProcedure } from "../index";
+import { keywordClusteringProcedures } from "../procedures/keyword-clustering";
 import { keywordRankingProcedures } from "../procedures/keyword-ranking";
 
 export const appRouter = {
@@ -16,6 +17,7 @@ export const appRouter = {
       .output(SerpApiCheckKeysOutputSchema)
       .handler(({ context, input }) => context.serpApi.checkKeys(input.keys)),
   },
+  keywordClustering: keywordClusteringProcedures,
   keywordRanking: keywordRankingProcedures,
 };
 export type AppRouter = typeof appRouter;

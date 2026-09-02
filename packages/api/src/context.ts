@@ -1,4 +1,8 @@
 import type {
+  KeywordClusteringBatchInput,
+  KeywordClusteringBatchOutput,
+} from "./contracts/keyword-clustering";
+import type {
   KeywordRankingBatchInput,
   KeywordRankingBatchOutput,
 } from "./contracts/keyword-ranking";
@@ -14,6 +18,9 @@ export type SerpApiClient = {
   runKeywordRankingBatch: (
     input: KeywordRankingBatchInput,
   ) => Promise<KeywordRankingBatchOutput>;
+  runKeywordClusteringBatch: (
+    input: KeywordClusteringBatchInput,
+  ) => Promise<KeywordClusteringBatchOutput>;
 };
 
 export function createContext({ serpApi }: { serpApi: SerpApiClient }) {

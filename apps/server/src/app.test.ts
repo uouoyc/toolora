@@ -222,6 +222,187 @@ describe("Hono app", () => {
     expect(secondRequest.searchParams.get("start")).toBe("10");
   });
 
+  it("fetches clustering Evidence as raw URLs with deduplicated page identities", async () => {
+    vi.stubEnv("CORS_ORIGIN", "http://localhost:3001");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({
+          organic_results: [
+            {
+              link: "https://www.example.com/a?gad_campaignid=24&gad_source=1",
+            },
+            { link: "http://example.com/a?utm_source=google" },
+            { link: "https://other.com/b?b=2&a=1" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          organic_results: [{ link: "https://shared.example/x?gclid=1" }],
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { app } = await import("./app");
+    const response = await app.request("/rpc/keywordClustering/fetchBatch", {
+      body: JSON.stringify({
+        json: {
+          country: "US",
+          key: {
+            id: "00000000-0000-4000-8000-000000000005",
+            secret: "test-key",
+          },
+          keywords: [" Alpha ", "Beta"],
+          language: "EN",
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      json: {
+        results: [
+          {
+            errorCode: null,
+            keyword: "alpha",
+            status: "evidence-ready",
+            urls: [
+              {
+                url: "https://www.example.com/a?gad_campaignid=24&gad_source=1",
+                urlIdentity: "example.com/a",
+              },
+              {
+                url: "https://other.com/b?b=2&a=1",
+                urlIdentity: "other.com/b",
+              },
+            ],
+          },
+          {
+            errorCode: null,
+            keyword: "beta",
+            status: "evidence-ready",
+            urls: [
+              {
+                url: "https://shared.example/x?gclid=1",
+                urlIdentity: "shared.example/x",
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain("test-key");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const request = fetchMock.mock.calls[0]?.[0] as URL;
+    expect(request.searchParams.get("engine")).toBe("google_light");
+    expect(request.searchParams.get("start")).toBe("0");
+  });
+
+  it("reports successful clustering requests without valid URLs as no-evidence", async () => {
+    vi.stubEnv("CORS_ORIGIN", "http://localhost:3001");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ organic_results: [] }))
+      .mockResolvedValueOnce(Response.json({}))
+      .mockResolvedValueOnce(
+        Response.json({ organic_results: [{ link: "not-a-url" }] }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { app } = await import("./app");
+    const response = await app.request("/rpc/keywordClustering/fetchBatch", {
+      body: JSON.stringify({
+        json: {
+          country: "us",
+          key: {
+            id: "00000000-0000-4000-8000-000000000006",
+            secret: "test-key",
+          },
+          keywords: ["empty", "missing", "invalid"],
+          language: "en",
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      json: {
+        results: [
+          {
+            errorCode: null,
+            keyword: "empty",
+            status: "no-evidence",
+            urls: [],
+          },
+          {
+            errorCode: null,
+            keyword: "missing",
+            status: "no-evidence",
+            urls: [],
+          },
+          {
+            errorCode: null,
+            keyword: "invalid",
+            status: "no-evidence",
+            urls: [],
+          },
+        ],
+      },
+    });
+  });
+
+  it("returns a stable failure for the clustering failed queue", async () => {
+    vi.stubEnv("CORS_ORIGIN", "http://localhost:3001");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 403 })),
+    );
+
+    const { app } = await import("./app");
+    const response = await app.request("/rpc/keywordClustering/fetchBatch", {
+      body: JSON.stringify({
+        json: {
+          country: "us",
+          key: {
+            id: "00000000-0000-4000-8000-000000000007",
+            secret: "test-key",
+          },
+          keywords: ["alpha"],
+          language: "en",
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+    expect(await response.json()).toEqual({
+      json: {
+        failures: [
+          {
+            errorCode: "KEY_FORBIDDEN",
+            httpStatus: 403,
+            keyword: "alpha",
+          },
+        ],
+        results: [
+          {
+            errorCode: "KEY_FORBIDDEN",
+            fetchedAt: null,
+            keyword: "alpha",
+            status: "failed",
+            urls: [],
+          },
+        ],
+      },
+    });
+  });
+
   it("returns a stable failure status for the browser failed queue", async () => {
     vi.stubEnv("CORS_ORIGIN", "http://localhost:3001");
     const targetDomain = generatedDomain();
