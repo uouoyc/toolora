@@ -1,8 +1,18 @@
 # Toolora Design QA
 
-Scope: Phase 1 Tool shell, Manifest, and Homepage Catalog.
+Scope: Phase 1 Tool shell, Manifest, and Homepage Catalog; Phase 6 catalog polish, SEO shell, and theme revalidation.
 
-## Evidence
+## Phase 6 Evidence (2026-09-02)
+
+- Live search interaction adopted per original Toolora behavior: filtering and highlighting update while typing; the 搜索 button focuses the input.
+- Catalog fidelity: search row uses the §3.11 recipes (command hint `hidden md:flex` + `bg-background/50`, input `min-h-13 bg-background/80` + focus `ring-4 ring-primary/10`, equal-height stretch cells at 18px radius); category rail is `lg:sticky` with a `shadow-lg shadow-primary/20` active indicator and `99+`-capped two-digit counts; tool cards use the hover 四件套 with `group-hover:text-primary` titles, `rounded-4xl` tag badges, and an h-8 full-width CTA; the empty state is `min-h-60 border-dashed`.
+- Browser captures: `qa/home-phase6-desktop-light.png`, `qa/home-phase6-desktop-dark.png`, `qa/home-phase6-mobile-light.png`, `qa/ranking-phase6-pagination-mobile.png`.
+- Measured (desktop 1280): search cells equal height (92px stretch), radii 18px uniform, icon inset 16px, active category shadow `shadow-lg shadow-primary/20`, badge 20px/26px radius, card radius 22px, card CTA 32px, no horizontal overflow. 375/768/1024 breakpoint behaviors match §6 (hint hidden→1 card column at 375; 3-col search + 2 columns at 768; sticky rail at 1024; 3 columns at 1280).
+- Responsive fix: shared Pagination now stacks below 768 (`flex-col` → `md:flex-row`), restoring the §3.9 recipe; keyword-ranking measured 36px horizontal overflow at 375 before the fix and 0 after, keyword-clustering 0.
+- Theme: Light↔Dark toggle drives the circular View Transition reveal (spy-verified `startViewTransition` with `--x/--y`), falls back to an immediate switch under emulated `prefers-reduced-motion: reduce` (no view transition), and follows System when no stored choice exists; both tool pages and the homepage keep zero overflow in dark.
+- Keyboard: `Ctrl+K` focuses search; tab order is wordmark → theme toggle → search input → 搜索 → categories → card CTAs; primitives keep `focus-visible` rings; category slide and indicator animations are `motion-reduce` guarded.
+
+## Phase 1 Evidence
 
 - Source visual truth: `docs/design/toolora/options/homepage-catalog-reference.png`
 - Browser-rendered implementation: `docs/design/toolora/qa/home-phase1-final.png`

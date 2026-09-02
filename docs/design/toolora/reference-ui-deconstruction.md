@@ -459,6 +459,10 @@ disabled:pointer-events-none disabled:opacity-50    ← 禁用 50% 透明
 
 分页补充修正（2026-09-01 第二轮）：默认每页条数对齐原站 **10**（此前 20 导致 18 条结果单页、分页整块消失）；分页底栏改为**常驻**——只要有结果就渲染（原站无 `totalPages > 1` 条件），单页时上一页/下一页置灰；新增 `safePage` 越界钳制，防止删除关键词或切换每页条数后停留在不存在的页码。
 
+分页第三轮修正（2026-09-02，Phase 6）：底栏补回 §3.9 的移动端纵向堆叠（`flex flex-col gap-4 md:flex-row md:items-center md:justify-between`，此前遗漏导致 375px 下 36px 横向溢出）；修复后两个工具页 375/768 实测零溢出。
+
+首页目录落地记录（2026-09-02，Phase 6）：按 §3.11 配方完成对齐——命令提示块 `hidden md:flex` + `bg-background/50 px-6 py-3`；搜索行 `min-h-13` 三格等高拉伸、输入 `bg-background/80` + 焦点 `ring-4 ring-primary/10`、图标 16px 内嵌随焦点变色；分类栏 `lg:sticky lg:top-8` + 指示块补 `shadow-lg shadow-primary/20`、计数 10px 双位补零 99+ 封顶；工具卡 hover 四件套 + `group-hover:text-primary`、标签 `h-5 rounded-4xl text-[10px]`、CTA h-8 全宽；空态 `min-h-60 border-dashed`。搜索交互经用户拍板改为**原站即时过滤**（输入即筛选高亮，搜索按钮聚焦输入框），Phase 1 的提交式交互废弃。
+
 ---
 
 ## 10. 布局架构差异：嵌套工作区卡 vs 平级区块卡（2026-09-01 分析）
