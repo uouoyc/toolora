@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { filterTools, splitHighlightSegments, TOOLS } from "./tools";
+import {
+  filterTools,
+  formatCategoryCount,
+  splitHighlightSegments,
+  TOOLS,
+} from "./tools";
 
 describe("Tool Catalog", () => {
   it("contains complete, unique, lowercase kebab-case Tool metadata", () => {
@@ -44,5 +49,19 @@ describe("Tool Catalog", () => {
       { text: "serp", match: true },
       { text: " 结果", match: false },
     ]);
+  });
+});
+
+describe("formatCategoryCount", () => {
+  it("pads small counts to two digits", () => {
+    expect(formatCategoryCount(0)).toBe("00");
+    expect(formatCategoryCount(7)).toBe("07");
+  });
+
+  it("keeps two-digit counts as-is and caps anything above 99", () => {
+    expect(formatCategoryCount(10)).toBe("10");
+    expect(formatCategoryCount(99)).toBe("99");
+    expect(formatCategoryCount(100)).toBe("99+");
+    expect(formatCategoryCount(250)).toBe("99+");
   });
 });
