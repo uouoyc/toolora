@@ -1,8 +1,8 @@
 import { KeywordRankingInputSchema } from "@toolora/api/contracts/keyword-ranking";
 import { describe, expect, it } from "vitest";
+import { createRetryBatches } from "../../lib/keyword-run/batches";
 import {
   bindSuccessfulKeywords,
-  createRetryBatches,
   createWorkspace,
   pruneKeywordBindings,
   restoreWorkspace,

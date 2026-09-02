@@ -3,14 +3,11 @@ import {
   KeywordRankingInputSchema,
   type KeywordRankingResult,
 } from "@toolora/api/contracts/keyword-ranking";
+import { csvDocument } from "../../lib/csv";
 import type { RunFailure } from "../../lib/keyword-run/types";
 
 export type FailedKeyword = RunFailure;
 
-export {
-  createRetryBatches,
-  splitKeywordBatches,
-} from "../../lib/keyword-run/batches";
 export {
   bindSuccessfulKeywords,
   pruneKeywordBindings,
@@ -61,24 +58,7 @@ export function summarizeResults(results: readonly KeywordRankingResult[]) {
   );
 }
 
-function csvCell(value: string | number | null) {
-  const text = value === null ? "" : String(value);
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replaceAll('"', '""')}"`;
-}
-
 export function workspaceCsv(workspace: KeywordRankingWorkspace) {
-  const header = [
-    "keyword",
-    "status",
-    "rank",
-    "url",
-    "error_code",
-    "country",
-    "language",
-    "search_depth",
-    "fetched_at",
-  ];
   const results = new Map(
     workspace.results.map((result) => [result.keyword, result]),
   );
@@ -94,10 +74,21 @@ export function workspaceCsv(workspace: KeywordRankingWorkspace) {
       workspace.input.language,
       workspace.input.searchDepth,
       result?.fetchedAt ?? null,
-    ]
-      .map(csvCell)
-      .join(",");
+    ];
   });
 
-  return `\uFEFF${[header.map(csvCell).join(","), ...rows].join("\r\n")}`;
+  return csvDocument([
+    [
+      "keyword",
+      "status",
+      "rank",
+      "url",
+      "error_code",
+      "country",
+      "language",
+      "search_depth",
+      "fetched_at",
+    ],
+    ...rows,
+  ]);
 }
