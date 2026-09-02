@@ -20,6 +20,19 @@ import { Input } from "@toolora/ui/components/input";
 import { Textarea } from "@toolora/ui/components/textarea";
 import { ArrowUpRight, Download, Pause, Play, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Banner } from "@/components/banner";
+import { DataTableHead } from "@/components/data-table-head";
+import {
+  Field,
+  toolInputClassName,
+  toolSelectClassName,
+  toolTextareaClassName,
+} from "@/components/field";
+import { MetricCard } from "@/components/metric-card";
+import { Microlabel } from "@/components/microlabel";
+import { Pagination } from "@/components/pagination";
+import { SectionCard } from "@/components/section-card";
+import { StatusPill } from "@/components/status-pill";
 import { client } from "@/utils/orpc";
 import {
   isSerpApiCountry,
@@ -100,26 +113,6 @@ function mergeResults(
 
 function resultCount(workspace: KeywordRankingWorkspaceState) {
   return workspace.results.length;
-}
-
-function pageNumbers(current: number, total: number): (number | "...")[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, index) => index + 1);
-  }
-  const pages: (number | "...")[] = [1];
-  const left = Math.max(2, current - 1);
-  const right = Math.min(total - 1, current + 1);
-  if (left > 2) {
-    pages.push("...");
-  }
-  for (let index = left; index <= right; index += 1) {
-    pages.push(index);
-  }
-  if (right < total - 1) {
-    pages.push("...");
-  }
-  pages.push(total);
-  return pages;
 }
 
 export function KeywordRankingWorkspace() {
@@ -526,20 +519,16 @@ export function KeywordRankingWorkspace() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="relative overflow-hidden rounded-[2rem] border bg-card p-8">
+      <SectionCard className="relative overflow-hidden">
         <div className="mb-8 flex items-start justify-between">
           <h2 className="font-bold text-2xl tracking-tight">查询工作区</h2>
           <SerpApiSettingsSheet />
         </div>
         <form className="flex flex-col gap-6" onSubmit={submitForm}>
-          <label
-            className="grid gap-4 text-sm"
-            htmlFor="keyword-ranking-domain"
-          >
-            <span className="font-bold">目标域名</span>
+          <Field htmlFor="keyword-ranking-domain" label="目标域名">
             <Input
               aria-label="目标域名"
-              className="h-12 rounded-xl bg-background/50 px-4 text-base focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 md:text-base"
+              className={toolInputClassName}
               id="keyword-ranking-domain"
               onChange={(event) =>
                 setForm((value) => ({
@@ -550,15 +539,11 @@ export function KeywordRankingWorkspace() {
               placeholder="example.com"
               value={form.targetDomain}
             />
-          </label>
-          <label
-            className="grid gap-4 text-sm"
-            htmlFor="keyword-ranking-keywords"
-          >
-            <span className="font-bold">关键词（每行一个）</span>
+          </Field>
+          <Field htmlFor="keyword-ranking-keywords" label="关键词">
             <Textarea
               aria-label="关键词"
-              className="h-36 max-h-36 min-h-36 rounded-xl bg-background/50 px-4 py-3 text-base leading-relaxed [field-sizing:fixed] focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 md:text-base"
+              className={toolTextareaClassName}
               id="keyword-ranking-keywords"
               onChange={(event) =>
                 setForm((value) => ({ ...value, keywords: event.target.value }))
@@ -567,16 +552,12 @@ export function KeywordRankingWorkspace() {
               rows={6}
               value={form.keywords}
             />
-          </label>
+          </Field>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <label
-              className="grid gap-4 text-sm"
-              htmlFor="keyword-ranking-country"
-            >
-              <span className="font-bold">国家 / 地区</span>
+            <Field htmlFor="keyword-ranking-country" label="国家 / 地区">
               <select
                 aria-label="国家 / 地区"
-                className="h-12 w-full cursor-pointer rounded-xl border border-border bg-background/50 px-4 text-base outline-none focus:border-primary focus:ring-4 focus:ring-primary/20"
+                className={toolSelectClassName}
                 id="keyword-ranking-country"
                 onChange={(event) =>
                   setForm((value) => ({
@@ -592,15 +573,11 @@ export function KeywordRankingWorkspace() {
                   </option>
                 ))}
               </select>
-            </label>
-            <label
-              className="grid gap-4 text-sm"
-              htmlFor="keyword-ranking-language"
-            >
-              <span className="font-bold">语言</span>
+            </Field>
+            <Field htmlFor="keyword-ranking-language" label="语言">
               <select
                 aria-label="语言"
-                className="h-12 w-full cursor-pointer rounded-xl border border-border bg-background/50 px-4 text-base outline-none focus:border-primary focus:ring-4 focus:ring-primary/20"
+                className={toolSelectClassName}
                 id="keyword-ranking-language"
                 onChange={(event) =>
                   setForm((value) => ({
@@ -616,15 +593,11 @@ export function KeywordRankingWorkspace() {
                   </option>
                 ))}
               </select>
-            </label>
-            <label
-              className="grid gap-4 text-sm"
-              htmlFor="keyword-ranking-depth"
-            >
-              <span className="font-bold">查询深度</span>
+            </Field>
+            <Field htmlFor="keyword-ranking-depth" label="查询深度">
               <select
                 aria-label="查询深度"
-                className="h-12 w-full cursor-pointer rounded-xl border border-border bg-background/50 px-4 text-base outline-none focus:border-primary focus:ring-4 focus:ring-primary/20"
+                className={toolSelectClassName}
                 id="keyword-ranking-depth"
                 onChange={(event) =>
                   setForm((value) => ({
@@ -640,13 +613,13 @@ export function KeywordRankingWorkspace() {
                   </option>
                 ))}
               </select>
-            </label>
+            </Field>
           </div>
           <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
             <div className="flex-1 rounded-xl border bg-muted/50 p-4">
-              <p className="mb-1 text-[10px] text-muted-foreground uppercase tracking-widest">
-                Run Hint
-              </p>
+              <div className="mb-1">
+                <Microlabel>Run Hint</Microlabel>
+              </div>
               <p className="text-muted-foreground text-xs">
                 只有在已经保存 Key 池后才允许执行查询。
               </p>
@@ -667,56 +640,27 @@ export function KeywordRankingWorkspace() {
             </div>
           </div>
         </form>
-      </section>
+      </SectionCard>
 
       {error ? (
-        <p
-          className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 font-medium text-destructive text-sm"
-          role="alert"
-        >
+        <Banner role="alert" tone="error">
           {error}
-        </p>
+        </Banner>
       ) : null}
       {unsaved ? (
-        <p
-          className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 font-medium text-sm text-yellow-600 dark:text-yellow-400"
-          role="status"
-        >
-          当前结果未保存，刷新页面会丢失进度。
-        </p>
+        <Banner tone="warning">当前结果未保存，刷新页面会丢失进度。</Banner>
       ) : null}
 
       {summary ? (
         <dl className="grid grid-cols-3 gap-4">
-          <div className="flex flex-col gap-2 rounded-3xl border bg-card p-4 sm:p-6">
-            <dt className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-              已找到
-            </dt>
-            <dd className="font-bold text-2xl tabular-nums tracking-tighter sm:text-4xl">
-              {summary.found}
-            </dd>
-          </div>
-          <div className="flex flex-col gap-2 rounded-3xl border bg-card p-4 sm:p-6">
-            <dt className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-              未找到
-            </dt>
-            <dd className="font-bold text-2xl tabular-nums tracking-tighter sm:text-4xl">
-              {summary["not-found"]}
-            </dd>
-          </div>
-          <div className="flex flex-col gap-2 rounded-3xl border bg-card p-4 sm:p-6">
-            <dt className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-              失败
-            </dt>
-            <dd className="font-bold text-2xl tabular-nums tracking-tighter sm:text-4xl">
-              {summary.failed}
-            </dd>
-          </div>
+          <MetricCard label="已找到" value={summary.found} />
+          <MetricCard label="未找到" value={summary["not-found"]} />
+          <MetricCard label="失败" value={summary.failed} />
         </dl>
       ) : null}
 
       {workspace ? (
-        <section className="flex flex-col gap-6 rounded-[2rem] border bg-card p-8">
+        <SectionCard className="flex flex-col gap-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-bold text-2xl tracking-tight">查询结果</h2>
@@ -810,18 +754,18 @@ export function KeywordRankingWorkspace() {
               <table className="w-full border-collapse text-left text-base">
                 <thead className="border-b text-muted-foreground">
                   <tr>
-                    <th className="whitespace-nowrap px-4 py-4 font-mono text-[10px] uppercase tracking-widest">
+                    <DataTableHead className="whitespace-nowrap">
                       关键词
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-4 font-mono text-[10px] uppercase tracking-widest">
+                    </DataTableHead>
+                    <DataTableHead className="whitespace-nowrap">
                       状态
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-4 font-mono text-[10px] uppercase tracking-widest">
+                    </DataTableHead>
+                    <DataTableHead className="whitespace-nowrap">
                       排名
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-4 font-mono text-[10px] uppercase tracking-widest">
+                    </DataTableHead>
+                    <DataTableHead className="whitespace-nowrap">
                       网址
-                    </th>
+                    </DataTableHead>
                     <th className="px-4 py-4">
                       <span className="sr-only">操作</span>
                     </th>
@@ -837,23 +781,23 @@ export function KeywordRankingWorkspace() {
                         {result.keyword}
                       </td>
                       <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 font-bold text-[10px] ${
+                        <StatusPill
+                          tone={
                             result.status === "found"
-                              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                              ? "success"
                               : result.status === "not-found"
-                                ? "bg-muted text-muted-foreground"
-                                : "bg-red-500/10 text-red-600 dark:text-red-400"
-                          }`}
+                                ? "neutral"
+                                : "error"
+                          }
                         >
                           {result.status === "found"
                             ? "已找到"
                             : result.status === "not-found"
                               ? "未找到"
                               : "失败"}
-                        </span>
+                        </StatusPill>
                       </td>
-                      <td className="px-4 py-4 font-mono tabular-nums">
+                      <td className="px-4 py-4 tabular-nums">
                         {result.rank ?? "—"}
                       </td>
                       <td className="max-w-50 truncate px-4 py-4 text-muted-foreground text-sm">
@@ -881,78 +825,18 @@ export function KeywordRankingWorkspace() {
             </div>
           )}
           {workspace.results.length > 0 ? (
-            <div className="mt-8 flex items-center justify-between gap-4 border-t pt-8">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-muted-foreground text-xs">
-                  每页展示
-                </span>
-                <select
-                  aria-label="每页展示"
-                  className="h-9 cursor-pointer rounded-lg border border-input bg-background px-3 font-bold text-xs outline-none"
-                  onChange={(event) => {
-                    setPage(0);
-                    setPageSize(Number(event.target.value));
-                  }}
-                  value={pageSize}
-                >
-                  {[10, 20, 30, 40, 50].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  className="h-9 cursor-pointer rounded-lg px-4 font-bold text-xs"
-                  disabled={safePage === 0}
-                  onClick={() => setPage((value) => value - 1)}
-                  type="button"
-                  variant="outline"
-                >
-                  上一页
-                </Button>
-                <div className="flex items-center gap-1">
-                  {pageNumbers(safePage + 1, pageCount).map((item, index) =>
-                    item === "..." ? (
-                      <span
-                        className="flex h-9 w-9 items-center justify-center text-muted-foreground text-xs"
-                        key={`ellipsis-${index}`}
-                      >
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        aria-current={
-                          safePage + 1 === item ? "page" : undefined
-                        }
-                        className={`h-9 w-9 cursor-pointer rounded-lg font-bold text-xs transition-all ${
-                          safePage + 1 === item
-                            ? "bg-primary text-primary-foreground"
-                            : "border border-input bg-background hover:bg-accent"
-                        }`}
-                        key={item}
-                        onClick={() => setPage(item - 1)}
-                        type="button"
-                      >
-                        {item}
-                      </button>
-                    ),
-                  )}
-                </div>
-                <Button
-                  className="h-9 cursor-pointer rounded-lg px-4 font-bold text-xs"
-                  disabled={safePage + 1 >= pageCount}
-                  onClick={() => setPage((value) => value + 1)}
-                  type="button"
-                  variant="outline"
-                >
-                  下一页
-                </Button>
-              </div>
-            </div>
+            <Pagination
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPage(0);
+                setPageSize(size);
+              }}
+              page={safePage}
+              pageCount={pageCount}
+              pageSize={pageSize}
+            />
           ) : null}
-        </section>
+        </SectionCard>
       ) : null}
 
       <AlertDialog onOpenChange={setStorageDialog} open={storageDialog}>
