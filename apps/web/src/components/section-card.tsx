@@ -10,7 +10,9 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-[2rem] border bg-card p-8", className)}>
+    <section
+      className={cn("min-w-0 rounded-[2rem] border bg-card p-8", className)}
+    >
       {children}
     </section>
   );

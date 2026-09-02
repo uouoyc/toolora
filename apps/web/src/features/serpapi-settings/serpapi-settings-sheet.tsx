@@ -215,7 +215,7 @@ export function SerpApiSettingsSheet() {
                       尚未保存任何 Key。
                     </p>
                   ) : (
-                    <div className="overflow-x-auto rounded-2xl border bg-card/50">
+                    <div className="min-w-0 overflow-x-auto rounded-2xl border bg-card/50">
                       <table className="w-full border-collapse text-left text-sm">
                         <thead className="border-b bg-muted/30 text-[10px] text-muted-foreground">
                           <tr>

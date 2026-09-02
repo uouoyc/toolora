@@ -750,7 +750,7 @@ export function KeywordRankingWorkspace() {
               尚无结果。
             </p>
           ) : (
-            <div className="relative overflow-x-auto">
+            <div className="relative min-w-0 overflow-x-auto">
               <table className="w-full border-collapse text-left text-base">
                 <thead className="border-b text-muted-foreground">
                   <tr>
