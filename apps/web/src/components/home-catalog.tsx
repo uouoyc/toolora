@@ -221,7 +221,7 @@ export function HomeCatalog({ tools }: { tools: readonly ToolManifestItem[] }) {
             ) : (
               <Empty className="min-h-60 rounded-2xl border border-dashed">
                 <EmptyHeader>
-                  <EmptyMedia variant="icon">
+                  <EmptyMedia variant="icon" className="rounded-lg">
                     <Search aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>没有匹配的工具</EmptyTitle>
