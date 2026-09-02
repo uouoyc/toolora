@@ -38,7 +38,7 @@ export function Pagination({
 }) {
   const safePage = Math.min(page, Math.max(0, pageCount - 1));
   return (
-    <div className="mt-8 flex items-center justify-between gap-4 border-t pt-8">
+    <div className="mt-8 flex flex-col gap-4 border-t pt-8 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
         <span className="font-medium text-muted-foreground text-xs">
           每页展示
