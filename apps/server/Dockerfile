@@ -9,12 +9,18 @@ RUN --mount=type=cache,target=/pnpm-store pnpm install --store-dir /pnpm-store
 ENV NODE_ENV=production
 RUN cd apps/server && pnpm run build
 
+# Self-contained production deployment for the runner. The bundle inlines
+# @toolora/* already, so the copied workspace links are dropped.
+RUN pnpm --filter=server deploy --prod --legacy /deploy \
+  && rm -rf /deploy/node_modules/@toolora \
+  && cp -r apps/server/dist /deploy/dist
+
 FROM node:24-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app /app
+
+COPY --from=builder /deploy ./
 
 EXPOSE 3000
 
-WORKDIR /app/apps/server
 CMD ["node", "dist/index.mjs"]
