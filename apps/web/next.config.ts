@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
   output: "standalone",
+  experimental: {
+    turbopackRustReactCompiler: true,
+  },
 };
 
 export default nextConfig;
