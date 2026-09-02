@@ -30,16 +30,14 @@
 
 ## 4. Keyword Clustering
 
-1. Visitor enters lowercase-normalized keywords, location, language, Grouping Accuracy, and optional Target Domain.
-2. Existing Workspace offers Add to Current Analysis or Start New Analysis.
-3. Evidence older than 24 hours triggers New Only versus Refresh All choice.
-4. Pre-run Dialog summarizes keyword count, estimated calls, settings, and eligible Keys.
-5. Initial Evidence batches run without retry; failed queue follows.
-6. Web Worker clusters all Evidence in the Workspace, including old plus newly added keywords.
-7. Results show Cluster Cards/Table, Primary Keyword, Cluster Keywords, Minimum Shared URL Pair, optional Domain Analysis, No Evidence, and Failed.
-8. Accuracy or Target Domain changes recompute locally.
-9. Location/language changes confirm and replace all Evidence.
-10. Starting a new Analysis offers export before replacing the Workspace.
+1. Visitor enters lowercase-normalized keywords, country, language, Grouping Accuracy, and optional Target Domain.
+2. 开始分析 is disabled while the form is incomplete, no Key is saved, or a Run is in progress.
+3. Clicking 开始分析 directly runs automatic Key health checking, clears prior Evidence, and fetches Evidence for all current textarea keywords; no pre-run or append/replace Dialog appears.
+4. Initial Evidence batches run without retry; failed queue follows.
+5. Web Worker clusters all Evidence in the Workspace.
+6. Results show Cluster Cards/Table, Primary Keyword, Cluster Keywords, Minimum Shared URL Pair, optional Domain Analysis, No Evidence, and Failed.
+7. Accuracy or Target Domain changes recompute locally; deleting a keyword from the results removes its Evidence and re-clusters locally behind one confirmation.
+8. Textarea edits define the next Run: removed keywords disappear on the next Run.
 
 ## 5. Shared state behavior
 

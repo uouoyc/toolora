@@ -13,7 +13,7 @@
 ```ts
 type KeywordClusteringInput = {
   keywords: string[];
-  location: string;
+  country: string;
   language: string;
   groupingAccuracy: number;
   targetDomain: string | null;
@@ -26,47 +26,45 @@ Keywords use the same normalization as Keyword Ranking and are stored/displayed 
 
 Store one versioned Workspace record under `keyword-clustering` using `idb-keyval`.
 
-- **添加到当前分析** fetches Evidence only for new keywords and re-clusters all old plus new keywords.
-- **开始新分析** confirms, offers export, and replaces the current Workspace.
-- deleting keywords removes their Evidence and re-clusters all remaining keywords.
+- The keyword textarea is the single source of truth. Every click on 开始分析 fetches Evidence for **all current textarea keywords** with the current country, language, Grouping Accuracy, and Target Domain.
+- Each run immediately clears prior Evidence, syncs the Workspace to the textarea (removed keywords disappear from the Workspace and results on the next Run), and keeps `keyword -> keyId` affinity for keywords that remain.
+- 开始分析 is disabled while the form is incomplete, no Key is saved, or a Run is in progress. Once at least one Key is saved, clicking Start runs automatic Key health checking and then the fetch; no pre-run confirmation exists.
+- deleting a keyword from the results removes its Evidence and re-clusters all remaining keywords locally behind one confirmation dialog, without SerpAPI. Deletion never special-cases the Primary Keyword: the deterministic rules produce the next Primary, or the Cluster dissolves when the remaining members no longer meet Grouping Accuracy.
 - changing Grouping Accuracy re-clusters without SerpAPI.
 - changing Target Domain recomputes Domain Analysis without SerpAPI.
-- changing location/language confirms, clears Evidence, and fetches all keywords.
 - no Project list, Analysis history, or server persistence exists.
 
-Evidence up to 24 hours old is reused when appending. If older Evidence exists, the user chooses between fetching only new keywords and refreshing all.
+There is no append/new-analysis choice and no 24-hour Evidence reuse decision; those flows are intentionally removed, mirroring Keyword Ranking. Only the Workspace storage-failure recovery Dialog and the keyword-deletion confirmation remain.
 
 ## Evidence procedure
 
-`keywordClustering.fetchBatch` accepts at most five keywords, one Key, location/language, and Tool-fixed `google_light` semantics. It returns validated Top 10 organic URLs per keyword, with no titles, snippets, raw Provider metadata, or Key data.
+`keywordClustering.fetchBatch` accepts at most five keywords, one Key, country/language, and Tool-fixed `google_light` semantics. It returns the Top 10 organic results per keyword as raw URL + page identity pairs, with no titles, snippets, raw Provider metadata, or Key data. The raw URL is kept for reference; every comparison, deduplication, count, and export uses the identity.
 
 Outcomes:
 
-- Evidence Ready — one or more valid normalized URLs
-- No Evidence — successful request with zero valid URLs; excluded from Clusters and not retried
+- Evidence Ready — one or more valid page identities
+- No Evidence — successful request with zero valid identities; excluded from Clusters and not retried
 - Failed — failed after the failed queue; excluded from Clusters
 
-## URL comparison key
+## URL identity
 
-For overlap comparison:
+The page is its host plus its path, nothing else — query parameters never decide page identity, so tracking parameters (`gclid`, `gbraid`, `gad_source`, `utm_*`, …) and business parameters (`?page=2`, `?id=…`) alike collapse onto the same page:
 
-- accept HTTP/HTTPS only
-- lowercase hostname
-- ignore a leading `www.`
-- treat HTTP and HTTPS as equivalent
-- remove default ports and fragment
-- remove `utm_*`, `gclid`, `fbclid`, `msclkid`, `srsltid`, and `ved`
-- sort remaining query parameters while preserving their values
-- remove non-root trailing slash
-- preserve full path and meaningful query parameters
-- deduplicate within each SERP
-- exclude unparseable URLs
+1. accept HTTP/HTTPS only; scheme and port are not part of identity
+2. lowercase hostname and drop a leading `www.` (other subdomains stay distinct)
+3. drop the entire query string and fragment
+4. collapse repeated slashes in the path
+5. drop default index documents (`index.html`, `index.htm`, `index.php`, case-insensitive)
+6. drop a trailing slash; the root path stays `/`
+7. identity = `hostname + pathname` (for example `https://www.example.com/foo/?page=2` → `example.com/foo`)
+
+SERP Evidence deduplicates by identity within each SERP, first (highest-ranked) occurrence wins; unparseable URLs are excluded.
 
 ## Clustering algorithm
 
 Run deterministic complete-link Agglomerative clustering in a Web Worker:
 
-1. compute every Pair's unique shared normalized URLs
+1. compute every Pair's unique shared page identities
 2. store overlap counts in a compact triangular `Uint8Array`
 3. begin with Singleton Clusters
 4. consider merge candidates by descending shared URL count and deterministic input order
@@ -108,8 +106,8 @@ type KeywordCluster = {
 3. `(clusterKeywords.length === 1) === (minimumSharedUrlPair === null)`.
 4. `(targetDomain === null) === (domainAnalysis === null)`.
 5. When Domain Analysis exists, `hasPossibleCannibalization === (new Set(matchUrls).size > 1)`.
-6. A Minimum Shared URL Pair contains two distinct Cluster members, unique normalized shared URLs, and `sharedUrlCount === sharedUrls.length`.
-7. Domain Analysis match URLs are unique normalized URLs whose exact hostname matches Target Domain.
+6. A Minimum Shared URL Pair contains two distinct Cluster members, unique shared page identities, and `sharedUrlCount === sharedUrls.length`.
+7. Domain Analysis match URLs are unique page identities whose exact host matches Target Domain.
 
 Deterministic rules:
 
@@ -124,48 +122,68 @@ Possible Cannibalization means multiple exact-host match URLs occur in one Clust
 
 ## Result presentation
 
-- Cluster Cards and compact Table view
+The Cluster is the only first-class result object across every surface.
+
+- Cluster Cards and the compact Table both present Clusters. The table main row, pagination, and filtering operate on Clusters; Keywords exist only as expanded members. Any future sorting must also operate on Clusters, never on expanded Keyword members.
+- the table member summary shows the first three Keywords joined with `·` plus a `+N` remainder (for example `a · b · c +7`); the full member list with roles and per-keyword Evidence appears in the expanded row
 - Primary Keyword and Cluster keywords
-- Minimum Shared URL Pair and drill-down Evidence
-- optional Domain Analysis and Possible Cannibalization
+- Minimum Shared URL Pair ("最低 SERP 重合") and drill-down Evidence ("搜索结果 n/10")
+- optional Domain Analysis ("目标网站匹配")
+- clustering status (independent vs clustered) and Target Domain matches stay separate dimensions; Possible Cannibalization ("可能页面竞争") marks the match column and never the status
 - separate No Evidence and Failed sections
 - filter by name/contents as selected in design
-- one CSV export
+- one export action with two CSV outputs, defined below
 
 ## CSV
 
-Each input keyword occupies one row:
+One export action offers two CSVs. Both use UTF-8 BOM and formula-injection protection. Cells joined with ` | ` are display-oriented encoding, not a guaranteed round-trip format.
+
+**Cluster CSV (default)** — one row per Cluster:
+
+```text
+cluster_id
+cluster_status
+primary_keyword
+keywords
+cluster_size
+weakest_pair
+minimum_shared_url_count
+target_domain
+target_domain_match_count
+target_domain_match_urls
+has_possible_cannibalization
+country
+language
+grouping_accuracy
+```
+
+- `cluster_status` values are `clustered` and `singleton`; No Evidence and Failed keywords never appear here because they are not Clusters
+- `keywords` and `target_domain_match_urls` join values with ` | `; exported URLs are page identities
+- `weakest_pair` renders `a ↔ b` and is blank for singletons
+- no Target Domain → the three target columns are blank; with a Target Domain, `target_domain_match_urls` is blank at zero matches and `has_possible_cannibalization` is `false` unless multiple match URLs exist
+
+**Keyword detail CSV (secondary)** — one row per input keyword:
 
 ```text
 keyword
-status
+keyword_status
 cluster_id
-primary_keyword
-is_primary_keyword
+cluster_primary_keyword
+keyword_role
 cluster_size
-minimum_pair_keyword_a
-minimum_pair_keyword_b
-minimum_shared_url_count
-target_domain
-domain_match_urls
-has_possible_cannibalization
+evidence_result_count
 error_code
-location
+evidence_fetched_at
+country
 language
 grouping_accuracy
-evidence_fetched_at
 ```
 
-Statuses are `clustered`, `singleton`, `no_evidence`, and `failed`.
-
-- no Target Domain → target/domain cells blank
-- Target Domain with no match → match URLs blank, cannibalization `false`
-- one match → URL, `false`
-- multiple matches → URLs joined with ` | `, `true`
-- No Evidence/Failed → Cluster and Domain Analysis fields blank
-- Failed alone carries error code
-- omit full Minimum Shared URL Pair URLs from CSV; view them in UI
-- use UTF-8 BOM and formula-injection protection
+- statuses are `clustered`, `singleton`, `no_evidence`, and `failed`
+- `keyword_role` is `primary` or `member`, blank outside Clusters
+- `evidence_result_count` is the fetched result count (`0` for No Evidence, blank for Failed or unfetched); only `failed` carries `error_code`
+- `grouping_accuracy` is an integer between 1 and 10 (a shared-URL threshold, not a percentage)
+- omit full Minimum Shared URL Pair URLs from both exports; view them in the UI
 
 ## Storage failure
 
@@ -182,12 +200,11 @@ An unsaved state remains visible after choosing memory-only mode.
 - Pair overlap and compact matrix indexing
 - deterministic merge ordering and all invariants
 - Primary Keyword and Minimum Shared URL Pair tie-breaks
-- append 300 then 700 and globally re-cluster all 1000
-- 24-hour Evidence decision
+- clustering 1000 keywords at full scale with deterministic results
 - Domain Analysis null/empty/one/multiple states
 - No Evidence and Failed exclusion
 - Web Worker request/result behavior
-- CSV row values and tri-state domain fields
+- Cluster CSV and Keyword detail CSV row values and tri-state target fields
 - Browser input, progress, replacement, storage, result, theme, and responsive states
 
 ## Acceptance
