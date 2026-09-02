@@ -86,7 +86,7 @@ SerpAPI Key 不需要配置在任何环境变量里：访客在页面右上角�
 部署前可选配置站点地址：复制环境变量文件并填入线上域名，只在本地访问则保持默认即可。
 
 ```bash
-cp apps/web/.env.example apps/web/.env
+cp .env.example .env
 ```
 
 ```text
