@@ -68,7 +68,7 @@ If you want to add app-specific blocks instead of shared primitives, run the sha
 - Logs: pnpm run docker:logs
 - Stop: pnpm run docker:down
 
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
+Builds use BuildKit cache mounts, so the Docker Engine needs the buildx plugin (on a WSL Arch engine: `pacman -S docker-buildx`). Public web variables are baked at build time via compose build args (`NEXT_PUBLIC_SERVER_URL`, `NEXT_PUBLIC_SITE_URL` — the latter defaults to `http://localhost:3001` and is overridable from the root `.env`); remaining environment variables are read from each app's `.env` file at runtime and overridden in `docker-compose.yml` for container networking.
 
 For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
 
