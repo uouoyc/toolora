@@ -1,6 +1,18 @@
 # Toolora Design QA
 
-Scope: Phase 1 Tool shell, Manifest, and Homepage Catalog; Phase 6 catalog polish, SEO shell, and theme revalidation.
+Scope: Phase 1 Tool shell, Manifest, and Homepage Catalog; Phase 6 catalog polish, SEO shell, and theme revalidation; Phase 7 hardening and acceptance (Docker, E2E matrix).
+
+## Phase 7 Evidence (2026-09-02)
+
+- Validation baseline held green throughout: `pnpm check` (zero diagnostics) / `check-types` / `test` (server 23 / web 90) / `build` (8 routes incl. robots.txt + sitemap.xml) / `git diff --check`.
+- Docker Compose smoke (WSL Docker Engine, buildx plugin installed): both containers build and pass their healthchecks; `NEXT_PUBLIC_SITE_URL` is now a web build arg (compose default `http://localhost:3001`, root `.env` overridable — no hardcoded production domain); server runner pruned from a full-monorepo copy to a `pnpm deploy --prod --legacy` directory (dist + production deps, 377 MB vs 1.65 GB builder stage); no `.env` inside either image.
+- Container-build fix: the Babel-run React Compiler panicked Turbopack on Linux (`conflicting effects for the same key`, bisected in-container); `experimental.turbopackRustReactCompiler` switches to the native Rust port — same feature, all platforms build.
+- Responsive fix: 375px page-level horizontal overflow (74px, 449px scroll width) came from result tables and the pagination controls stretching flex ancestors; `min-w-0` on SectionCard + the three table scroll wrappers, plus `flex-wrap` on the pagination controls row, restore in-container table scrolling (page width 360px at 375 viewport, zero page overflow).
+- Browser E2E (containerized web via same-origin proxy + fake oRPC stub; no real SerpAPI query, no real key): ranking success 8/8 (found 5 / not-found 3 / failed 0), Provider errors (single-key INVALID_KEY terminal state with per-row retry affordances; three-key pool with per-keyword PROVIDER_UNAVAILABLE auto-rotates two keys then manual 重试失败项 resolves via the third, failures clear to 0), storage failure (IndexedDB write throws → 无法保存当前工作区 dialog; 继续但不保存 keeps live data with the unsaved banner, 删除此前工作区并重试 recovers and clears it), pause/resume (55-keyword run pauses at 50/55 with 继续查询, resumes to 55/55), refresh recovery (workspace, form, results, and metrics fully restore from IndexedDB), clustering success (6 keywords → CLUSTER 1/2/3 with card/table views, pagination, CSV).
+- Theme triad: explicit light/dark via `theme` storage (html class + body background contrast), toggle dark↔light verified twice, and no stored choice follows System (html class matches the real OS preference); reduced-motion path verified with a patched `matchMedia` — theme toggle performs 0 view transitions under `prefers-reduced-motion: reduce` while still switching.
+- Keyboard: all 19 interactive elements on the Tool page are native focusables (no fake controls), real Tab advances wordmark → theme toggle, and inputs carry a `:focus-visible` 4px ring; the IAB's synthetic key/click injection is unreliable, so form submission was verified through the same submit-event path a keyboard Enter takes.
+- Browser captures: `qa/ranking-phase7-success.png`, `qa/ranking-phase7-provider-error.png`, `qa/ranking-phase7-storage-failure-dialog.png`, `qa/ranking-phase7-paused.png`, `qa/ranking-phase7-refresh-recovery.png`, `qa/clustering-phase7-success.png`, `qa/theme-phase7-light.png`, `qa/theme-phase7-dark.png`, `qa/ranking-phase7-mobile-375.png`.
+- Remaining limits: `pnpm deploy --legacy` is experimental-flagged in pnpm 11.22; `turbopackRustReactCompiler` is experimental; OS color-scheme flip and full physical-keyboard submission were not demonstrable in the IAB (no colorScheme emulation; unreliable event injection); the two tools' table wrapper markup remains duplicated (shared-recipe extraction left as future polish).
 
 ## Phase 6 Evidence (2026-09-02)
 
