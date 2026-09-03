@@ -81,38 +81,14 @@ SerpAPI Key 不需要配置在任何环境变量里：访客在页面右上角�
 
 ## 部署
 
-### Docker Compose
-
-部署前可选配置站点地址：复制环境变量文件并填入线上域名，只在本地访问则保持默认即可。
-
-```bash
-cp .env.example .env
-```
-
-```text
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
-```
-
-首次部署或代码有变更时，带 `--build` 重新构建并启动：
-
-```bash
-docker compose up -d --build
-```
-
-镜像已是最新时，直接启动：
-
-```bash
-docker compose up -d
-```
-
-然后访问 `http://ip:3001`。
+云服务器部署（Docker Compose + Nginx + HTTP/HTTPS）的完整步骤详见 [docs/deploy.md](docs/deploy.md)。
 
 ## 数据与 Workspace
 
-- 每个工具至多一个「工作区」，保存在访客浏览器的 IndexedDB，刷新页面自动恢复;关闭页面会停止进行中的查询。
+- 每个工具至多一个「工作区」，保存在访客浏览器的 IndexedDB，刷新页面自动恢复；关闭页面会停止进行中的查询。
 - SerpAPI 设置支持多个 Key(轮询或顺序使用)，开始查询前自动做健康检查，Key 级错误会自动换 Key 重试。
-- 服务器不持久化任何访客数据;Key 仅作为单次请求参数经过服务端转发给 SerpAPI。
-- 清除浏览器存储会丢失工作区与密钥设置——平台侧没有备份，这是刻意设计。
+- 服务器不持久化任何访客数据；Key 仅作为单次请求参数经过服务端转发给 SerpAPI。
+- 清除浏览器存储会丢失工作区与密钥设置，平台侧没有备份，这是刻意设计。
 
 ## 架构原则
 
@@ -125,9 +101,10 @@ docker compose up -d
 ## 注意事项
 
 - 排名查询与聚类单次最多处理 1000 个关键词;聚类证据固定为 Top 10 结果，合并精度 1–10(默认 4)。
-- Docker 构建使用 BuildKit cache mounts，需要 Docker Engine 安装 buildx 插件;`NEXT_PUBLIC_*` 公共变量在镜像构建时固化，改变量需重新构建 web 镜像。
+- Docker 构建使用 BuildKit cache mounts，需要 Docker Engine 安装 buildx 插件；`NEXT_PUBLIC_*` 公共变量在镜像构建时固化，改变量需重新构建 web 镜像。
 
 ## 更多文档
 
 - [架构决策与落位规则](docs/architecture.md)
 - [领域词汇表](docs/domain.md) —— 代码与 UI 文案使用的统一术语
+- [云服务器部署指南](docs/deploy.md)
