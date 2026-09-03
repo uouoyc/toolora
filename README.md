@@ -106,5 +106,5 @@ SerpAPI Key 不需要配置在任何环境变量里：访客在页面右上角�
 ## 更多文档
 
 - [架构决策与落位规则](docs/architecture.md)
-- [领域词汇表](docs/domain.md) —— 代码与 UI 文案使用的统一术语
+- [领域词汇表](docs/domain.md)
 - [云服务器部署指南](docs/deploy.md)
